@@ -132,14 +132,20 @@ jobs:
   test-c:
     name: Run C Tests
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.message, 'solution.c') ||
-      contains(github.event.head_commit.message, 'test.c')
     steps:
       - uses: actions/checkout@v4
+      - name: Check changed files
+        id: changed-files-c
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            solutions/solution.c
+            tests/test.c
       - name: Install gcc
+        if: steps.changed-files-c.outputs.any_changed == 'true'
         run: sudo apt-get update && sudo apt-get install -y gcc
       - name: Compile and run C tests
+        if: steps.changed-files-c.outputs.any_changed == 'true'
         run: |
           gcc tests/test.c -o c_testrunner
           ./c_testrunner
@@ -147,14 +153,20 @@ jobs:
   test-cpp:
     name: Run C++ Tests
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.message, 'solution.cpp') ||
-      contains(github.event.head_commit.message, 'test.cpp')
     steps:
       - uses: actions/checkout@v4
+      - name: Check changed files
+        id: changed-files-cpp
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            solutions/solution.cpp
+            tests/test.cpp
       - name: Install g++
+        if: steps.changed-files-cpp.outputs.any_changed == 'true'
         run: sudo apt-get update && sudo apt-get install -y g++
       - name: Compile and run C++ tests
+        if: steps.changed-files-cpp.outputs.any_changed == 'true'
         run: |
           g++ tests/test.cpp -o cpp_testrunner
           ./cpp_testrunner
@@ -162,12 +174,17 @@ jobs:
   test-java:
     name: Run Java Tests
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.message, 'Solution.java') ||
-      contains(github.event.head_commit.message, 'Test.java')
     steps:
       - uses: actions/checkout@v4
+      - name: Check changed files
+        id: changed-files-java
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            solutions/Solution.java
+            tests/Test.java
       - name: Compile and run Java tests
+        if: steps.changed-files-java.outputs.any_changed == 'true'
         run: |
           javac -d . solutions/Solution.java tests/Test.java
           java tests.Test
@@ -175,11 +192,16 @@ jobs:
   test-python:
     name: Run Python Tests
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.message, 'solution.py') ||
-      contains(github.event.head_commit.message, 'test.py')
     steps:
       - uses: actions/checkout@v4
+      - name: Check changed files
+        id: changed-files-python
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            solutions/solution.py
+            tests/test.py
       - name: Run Python tests
+        if: steps.changed-files-python.outputs.any_changed == 'true'
         run: |
           python3 tests/test.py
