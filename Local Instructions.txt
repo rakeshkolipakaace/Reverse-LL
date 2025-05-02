@@ -9,8 +9,9 @@ git push
 
 Python 
 
-PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> python -u "c:\Users\k.Rakesh\OneDrive\Desktop\3sum\tests\test.py"
-
+ git add solutions/solution.py tests/test.py
+ git commit -m "py: Add test cases12111"
+ git push
 
 
 c 
@@ -18,6 +19,14 @@ c
 
 git add solutions/solution.c tests/test.c
 git commit -m "C: Add test cases3.12"
+git push
+ 
+
+
+JAVA 
+
+git add solutions/Solution.java tests/Test.java
+git commit -m "java: Add test cases"
 git push
  
 
