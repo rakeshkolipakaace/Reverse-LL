@@ -93,76 +93,106 @@
 
 
 
-name: DSA Solution Tester
+name: Run DSA Code Tests
 
 on:
   push:
     paths:
       - "solutions/**"
+  pull_request:
+    paths:
+      - "tests/**"
 
 jobs:
   run-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Detect changed language
-        id: detect-lang
+      - name: Detect Changed Files
+        id: changed-files
         run: |
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} HEAD -- solutions/)
-          echo "Changed files: $CHANGED_FILES"
+          # Get changed files in solutions directory
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '^solutions/' || echo "")
           
-          if [[ "$CHANGED_FILES" == *".c"* ]]; then
-            echo "language=C" >> $GITHUB_OUTPUT
-          elif [[ "$CHANGED_FILES" == *".cpp"* ]]; then
-            echo "language=C++" >> $GITHUB_OUTPUT
-          elif [[ "$CHANGED_FILES" == *".java"* ]]; then
-            echo "language=Java" >> $GITHUB_OUTPUT
-          elif [[ "$CHANGED_FILES" == *".py"* ]]; then
-            echo "language=Python" >> $GITHUB_OUTPUT
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No changes in solutions/ directory. Exiting..."
+            exit 1
           fi
-          echo "Detected: ${{ steps.detect-lang.outputs.language }}"
+          
+          echo "CHANGED_FILES=$(echo "$CHANGED_FILES" | tr '\n' ' ')" >> $GITHUB_ENV
+          
+          # Detect programming languages
+          LANGS=""
+          for file in $CHANGED_FILES; do
+            if [[ "$file" == *.c ]]; then LANGS="${LANGS}C "; fi
+            if [[ "$file" == *.cpp ]]; then LANGS="${LANGS}C++ "; fi
+            if [[ "$file" == *.py ]]; then LANGS="${LANGS}Python "; fi
+            if [[ "$file" == *.java ]]; then LANGS="${LANGS}Java "; fi
+          done
+          
+          echo "LANGUAGES=$(echo "$LANGS" | xargs)" >> $GITHUB_ENV
 
-      - name: Set up environment
+      - name: Check for Empty Solutions
         run: |
-          sudo apt-get -qq update
-          case "${{ steps.detect-lang.outputs.language }}" in
-            C)
-              sudo apt-get -qq install -y gcc
-              ;;
-            C++)
-              sudo apt-get -qq install -y g++
-              ;;
-            Java)
-              sudo apt-get -qq install -y openjdk-17-jdk-headless
-              ;;
-            Python)
-              sudo apt-get -qq install -y python3 python3-pip
-              ;;
-          esac
+          for file in $CHANGED_FILES; do
+            # Check if file contains actual code (simplified)
+            if [ $(grep -v '^\s*$\|^\s*\/\/\|^\s*\/\*\|^\s*\*\|^\s*\*\/' "$file" | wc -l) -lt 3 ]; then
+              echo "Error: $file appears to be empty or contain only function signatures"
+              exit 1
+            fi
+          done
 
-      - name: Run tests
+      - name: Install Dependencies
         run: |
-          cd "$GITHUB_WORKSPACE"
-          case "${{ steps.detect-lang.outputs.language }}" in
-            C)
-              echo "=== Running C Tests ==="
-              gcc -I solutions tests/test.c solutions/solution.c -o testrunner
-              ./testrunner
-              ;;
-            C++)
-              echo "=== Running C++ Tests ==="
-              g++ -I solutions -std=c++17 tests/test.cpp solutions/solution.cpp -o testrunner
-              ./testrunner
-              ;;
-            Java)
-              echo "=== Running Java Tests ==="
-              javac solutions/Solution.java tests/Test.java
-              java -cp solutions:tests Test
-              ;;
-            Python)
-              echo "=== Running Python Tests ==="
-              pip install pytest
-              PYTHONPATH=. pytest tests/test_solution.py -v
-              ;;
-          esac
+          sudo apt update
+          # Install only needed dependencies based on detected languages
+          if [[ "$LANGUAGES" == *"C"* ]]; then sudo apt install -y gcc; fi
+          if [[ "$LANGUAGES" == *"C++"* ]]; then sudo apt install -y g++; fi
+          if [[ "$LANGUAGES" == *"Python"* ]]; then sudo apt install -y python3; fi
+          if [[ "$LANGUAGES" == *"Java"* ]]; then sudo apt install -y openjdk-17-jdk-headless; fi
+
+      - name: Run Tests
+        run: |
+          mkdir -p test_results
+          
+          # Run C tests
+          if [[ "$LANGUAGES" == *"C"* ]] && [ -f tests/test.c ]; then
+            echo "Running C tests..."
+            gcc tests/test.c $(find solutions -name "*.c") -o test_c
+            ./test_c > test_results/c_output.txt
+          fi
+          
+          # Run C++ tests
+          if [[ "$LANGUAGES" == *"C++"* ]] && [ -f tests/test.cpp ]; then
+            echo "Running C++ tests..."
+            g++ -std=c++17 tests/test.cpp $(find solutions -name "*.cpp") -o test_cpp
+            ./test_cpp > test_results/cpp_output.txt
+          fi
+          
+          # Run Python tests
+          if [[ "$LANGUAGES" == *"Python"* ]] && [ -f tests/test.py ]; then
+            echo "Running Python tests..."
+            PYTHONPATH=. python3 tests/test.py > test_results/python_output.txt
+          fi
+          
+          # Run Java tests
+          if [[ "$LANGUAGES" == *"Java"* ]] && [ -f tests/Test.java ]; then
+            echo "Running Java tests..."
+            mkdir -p out
+            javac -d out tests/Test.java solutions/*.java
+            java -cp out tests.Test > test_results/java_output.txt
+          fi
+          
+          # Display all test results
+          cat test_results/*.txt || echo "No test results found"
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test_results/
