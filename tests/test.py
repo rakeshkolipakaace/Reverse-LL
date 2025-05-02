@@ -1,5 +1,5 @@
 import unittest
-from solution import Solution  # Importing the Solution class from solution.py
+from solutions.solution import Solution   # Importing the Solution class from solution.py
 
 class TestReverseLinkedList(unittest.TestCase):
 
