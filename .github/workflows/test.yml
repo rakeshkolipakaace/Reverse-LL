@@ -126,25 +126,45 @@ name: Multi-Language Solution Tester
 on:
   push:
     paths:
-      - "solutions/**"
-      - "tests/**"
-      - ".github/workflows/test.yml"
+      - 'solutions/**'
+      - 'tests/**'
+      - '.github/workflows/test.yml'
 
 jobs:
-  test-c:
-    name: Run C Tests
+  filter:
+    name: Check changed files
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.modified, 'solution.c') ||
-      contains(github.event.head_commit.added, 'solution.c') ||
-      contains(github.event.head_commit.modified, 'test.c') ||
-      contains(github.event.head_commit.added, 'test.c')
+    outputs:
+      c: ${{ steps.filter.outputs.c }}
+      cpp: ${{ steps.filter.outputs.cpp }}
+      java: ${{ steps.filter.outputs.java }}
+      python: ${{ steps.filter.outputs.python }}
     steps:
       - uses: actions/checkout@v4
-      - name: Debug - Print Changed Files
-        run: |
-          echo "Modified files: ${{ github.event.head_commit.modified }}"
-          echo "Added files: ${{ github.event.head_commit.added }}"
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            c:
+              - 'solutions/solution.c'
+              - 'tests/test.c'
+            cpp:
+              - 'solutions/solution.cpp'
+              - 'tests/test.cpp'
+            java:
+              - 'solutions/Solution.java'
+              - 'tests/Test.java'
+            python:
+              - 'solutions/solution.py'
+              - 'tests/test.py'
+
+  test-c:
+    name: Run C Tests
+    needs: filter
+    if: needs.filter.outputs.c == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Install gcc
         run: sudo apt-get update && sudo apt-get install -y gcc
       - name: Compile and run C tests
@@ -154,18 +174,11 @@ jobs:
 
   test-cpp:
     name: Run C++ Tests
+    needs: filter
+    if: needs.filter.outputs.cpp == 'true'
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.modified, 'solution.cpp') ||
-      contains(github.event.head_commit.added, 'solution.cpp') ||
-      contains(github.event.head_commit.modified, 'test.cpp') ||
-      contains(github.event.head_commit.added, 'test.cpp')
     steps:
       - uses: actions/checkout@v4
-      - name: Debug - Print Changed Files
-        run: |
-          echo "Modified files: ${{ github.event.head_commit.modified }}"
-          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Install g++
         run: sudo apt-get update && sudo apt-get install -y g++
       - name: Compile and run C++ tests
@@ -175,18 +188,11 @@ jobs:
 
   test-java:
     name: Run Java Tests
+    needs: filter
+    if: needs.filter.outputs.java == 'true'
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.modified, 'Solution.java') ||
-      contains(github.event.head_commit.added, 'Solution.java') ||
-      contains(github.event.head_commit.modified, 'Test.java') ||
-      contains(github.event.head_commit.added, 'Test.java')
     steps:
       - uses: actions/checkout@v4
-      - name: Debug - Print Changed Files
-        run: |
-          echo "Modified files: ${{ github.event.head_commit.modified }}"
-          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Compile and run Java tests
         run: |
           javac -d . solutions/Solution.java tests/Test.java
@@ -194,18 +200,11 @@ jobs:
 
   test-python:
     name: Run Python Tests
+    needs: filter
+    if: needs.filter.outputs.python == 'true'
     runs-on: ubuntu-latest
-    if: |
-      contains(github.event.head_commit.modified, 'solution.py') ||
-      contains(github.event.head_commit.added, 'solution.py') ||
-      contains(github.event.head_commit.modified, 'test.py') ||
-      contains(github.event.head_commit.added, 'test.py')
     steps:
       - uses: actions/checkout@v4
-      - name: Debug - Print Changed Files
-        run: |
-          echo "Modified files: ${{ github.event.head_commit.modified }}"
-          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Run Python tests
         run: |
           python3 tests/test.py
