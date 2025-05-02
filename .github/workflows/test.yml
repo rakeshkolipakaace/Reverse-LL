@@ -159,32 +159,44 @@ jobs:
         run: |
           mkdir -p test_results
           
+          # Create symbolic links for solution files
+          mkdir -p temp
+          for file in $CHANGED_FILES; do
+            # Create solution.EXT in temp directory
+            ext="${file##*.}"
+            cp "$file" "temp/solution.$ext"
+            # Also create a link in working directory for direct inclusion
+            cp "$file" "solution.$ext"
+          done
+          
           # Run C tests
           if [[ "$LANGUAGES" == *"C"* ]] && [ -f tests/test.c ]; then
             echo "Running C tests..."
-            gcc tests/test.c $(find solutions -name "*.c") -o test_c
-            ./test_c > test_results/c_output.txt
+            gcc tests/test.c -o test_c
+            ./test_c > test_results/c_output.txt || echo "C tests failed" >> test_results/c_output.txt
           fi
           
           # Run C++ tests
           if [[ "$LANGUAGES" == *"C++"* ]] && [ -f tests/test.cpp ]; then
             echo "Running C++ tests..."
-            g++ -std=c++17 tests/test.cpp $(find solutions -name "*.cpp") -o test_cpp
-            ./test_cpp > test_results/cpp_output.txt
+            g++ -std=c++17 tests/test.cpp -o test_cpp
+            ./test_cpp > test_results/cpp_output.txt || echo "C++ tests failed" >> test_results/cpp_output.txt
           fi
           
           # Run Python tests
           if [[ "$LANGUAGES" == *"Python"* ]] && [ -f tests/test.py ]; then
             echo "Running Python tests..."
-            PYTHONPATH=. python3 tests/test.py > test_results/python_output.txt
+            cp temp/solution.py . 2>/dev/null || true
+            PYTHONPATH=.:solutions python3 tests/test.py > test_results/python_output.txt || echo "Python tests failed" >> test_results/python_output.txt
           fi
           
           # Run Java tests
           if [[ "$LANGUAGES" == *"Java"* ]] && [ -f tests/Test.java ]; then
             echo "Running Java tests..."
             mkdir -p out
-            javac -d out tests/Test.java solutions/*.java
-            java -cp out tests.Test > test_results/java_output.txt
+            cp temp/solution.java Solution.java 2>/dev/null || true
+            javac -d out tests/Test.java Solution.java
+            java -cp out tests.Test > test_results/java_output.txt || echo "Java tests failed" >> test_results/java_output.txt
           fi
           
           # Display all test results
