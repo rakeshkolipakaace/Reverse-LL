@@ -1,14 +1,9 @@
 import unittest
-from solution import Solution
-
-class ListNode(object):
-    def __init__(self, val=0, next=None):
-        self.val = val
-        self.next = next
+from solution import Solution  # Importing the Solution class from solution.py
 
 class TestReverseLinkedList(unittest.TestCase):
-    
-    # Helper functions to convert between list and linked list
+
+    # Helper function to convert list to linked list
     def list_to_linkedlist(self, elements):
         head = ListNode(0)
         current = head
@@ -17,6 +12,7 @@ class TestReverseLinkedList(unittest.TestCase):
             current = current.next
         return head.next
 
+    # Helper function to convert linked list to list
     def linkedlist_to_list(self, node):
         result = []
         while node:
@@ -52,8 +48,7 @@ class TestReverseLinkedList(unittest.TestCase):
         ]
 
         for i, (input_list, expected_output) in enumerate(test_cases):
-            print("---------------------------------------------------")
-            print(f"Running: Test {i + 1}")
+            print(f"Running Test {i + 1}")
             print(f"Input: {input_list}")
             print(f"Expected Output: {expected_output}")
             head = self.list_to_linkedlist(input_list)
