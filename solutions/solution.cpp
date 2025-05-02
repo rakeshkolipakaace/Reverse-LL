@@ -10,6 +10,6 @@ class Solution {
             }
             return prevNode;
         }
-        // Function to reverse a singly linked list......................../
+        // Function to reverse a singly linked list........................//
     };
     
