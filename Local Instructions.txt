@@ -1,0 +1,28 @@
+cpp local compile 
+
+
+PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum\solutions> cd "C:\Users\k.Rakesh\OneDrive\Desktop\3sum"
+PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> g++ solutions/solution.cpp tests/test.cpp -o run_tests.exe
+PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> .\run_tests.exe
+
+
+
+
+
+Python 
+
+PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> python -u "c:\Users\k.Rakesh\OneDrive\Desktop\3sum\tests\test.py"
+
+
+
+c 
+
+
+PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> gcc solutions/solution.c tests/test.c -o three_sum.exe
+PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> .\three_sum.exe    
+
+
+
+
+
+
