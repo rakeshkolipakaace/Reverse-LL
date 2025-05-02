@@ -4,19 +4,71 @@
 #include "../solutions/solution.cpp"  // Include the solution file
 
 // Create linked list from array
-ListNode* createList(const std::vector<int>& arr);
+ListNode* createList(const std::vector<int>& arr) {
+    if (arr.empty()) return nullptr;
+    ListNode* head = new ListNode(arr[0]);
+    ListNode* current = head;
+    for (size_t i = 1; i < arr.size(); ++i) {
+        current->next = new ListNode(arr[i]);
+        current = current->next;
+    }
+    return head;
+}
 
 // Compare two linked lists for equality
-bool compareLists(ListNode* l1, ListNode* l2);
+bool compareLists(ListNode* l1, ListNode* l2) {
+    while (l1 && l2) {
+        if (l1->val != l2->val) return false;
+        l1 = l1->next;
+        l2 = l2->next;
+    }
+    return l1 == nullptr && l2 == nullptr;
+}
 
 // Print linked list
-void printList(ListNode* head);
+void printList(ListNode* head) {
+    ListNode* current = head;
+    std::cout << "[";
+    while (current) {
+        std::cout << current->val;
+        if (current->next) std::cout << ", ";
+        current = current->next;
+    }
+    std::cout << "]" << std::endl;
+}
 
 // Free linked list memory
-void freeList(ListNode* head);
+void freeList(ListNode* head) {
+    while (head) {
+        ListNode* temp = head;
+        head = head->next;
+        delete temp;
+    }
+}
 
 // Run a test case with PASS/FAIL logic
-void runTest(const std::vector<int>& arr, const std::vector<int>& expectedArr, const std::string& description);
+void runTest(const std::vector<int>& arr, const std::vector<int>& expectedArr, const std::string& description) {
+    Solution solution;
+    ListNode* inputList = createList(arr);
+    ListNode* expectedList = createList(expectedArr);
+    ListNode* resultList = solution.reverseList(inputList);
+
+    bool passed = compareLists(resultList, expectedList);
+    std::cout << "Test: " << description << std::endl;
+    std::cout << "Input: ";
+    printList(inputList);
+    std::cout << "Expected: ";
+    printList(expectedList);
+    std::cout << "Result: ";
+    printList(resultList);
+    std::cout << (passed ? "✅ Test Passed!" : "❌ Test Failed!") << std::endl;
+    std::cout << "---------------------------------------------" << std::endl;
+
+    // Free allocated memory
+    freeList(inputList);
+    freeList(expectedList);
+    freeList(resultList);
+}
 
 int main() {
     // Test cases
