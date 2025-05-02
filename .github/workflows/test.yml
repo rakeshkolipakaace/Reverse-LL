@@ -1,3 +1,99 @@
+# name: Run DSA Problem Tests
+
+# on:
+#   push:
+#     paths:
+#       - 'problems/*/solutions/**'
+#       - 'problems/*/tests/**'
+#   pull_request:
+#     paths:
+#       - 'problems/*/solutions/**'
+#       - 'problems/*/tests/**'
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+    
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+#         with:
+#           fetch-depth: 2
+      
+#       - name: Install dependencies
+#         run: |
+#           sudo apt-get update
+#           sudo apt-get install -y gcc g++ build-essential
+          
+#       - name: Setup Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.x'
+          
+#       - name: Setup Java
+#         uses: actions/setup-java@v3
+#         with:
+#           distribution: 'temurin'
+#           java-version: '17'
+      
+#       - name: Detect and run tests
+#         run: |
+#           # Determine changed files
+#           if [ "${{ github.event_name }}" == "push" ]; then
+#             CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '^problems/.*/solutions/')
+#           elif [ "${{ github.event_name }}" == "pull_request" ]; then
+#             git fetch origin ${{ github.base_ref }} --depth=1
+#             CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -E '^problems/.*/solutions/')
+#           else
+#             CHANGED_FILES=$(find problems -path "*/solutions/*" -type f)
+#           fi
+          
+#           echo "Changed files: $CHANGED_FILES"
+          
+#           # Process each changed file
+#           for FILE in $CHANGED_FILES; do
+#             # Extract problem name and determine language
+#             PROBLEM=$(echo $FILE | cut -d'/' -f2)
+            
+#             if [[ "$FILE" == *.py ]]; then
+#               echo "Running Python tests for $PROBLEM"
+#               cd problems/$PROBLEM
+#               python3 -m unittest discover -s tests -p 'test_*.py'
+#               cd ../..
+#             elif [[ "$FILE" == *.c ]]; then
+#               echo "Running C tests for $PROBLEM"
+#               cd problems/$PROBLEM
+#               SOLUTION_FILE=$(find solutions -name "*.c" | head -n 1)
+#               TEST_FILE=$(find tests -name "*.c" | head -n 1)
+#               gcc -Wall -I./solutions -I./tests "$SOLUTION_FILE" "$TEST_FILE" -o c_test && ./c_test
+#               cd ../..
+#             elif [[ "$FILE" == *.cpp ]]; then
+#               echo "Running C++ tests for $PROBLEM"
+#               cd problems/$PROBLEM
+#               SOLUTION_FILE=$(find solutions -name "*.cpp" | head -n 1)
+#               TEST_FILE=$(find tests -name "*.cpp" | head -n 1)
+#               g++ -Wall -I./solutions -I./tests "$SOLUTION_FILE" "$TEST_FILE" -o cpp_test && ./cpp_test
+#               cd ../..
+#             elif [[ "$FILE" == *.java ]]; then
+#               echo "Running Java tests for $PROBLEM"
+#               cd problems/$PROBLEM
+#               SOLUTION_FILES=$(find solutions -name "*.java")
+#               TEST_FILES=$(find tests -name "*.java")
+#               javac -d . $SOLUTION_FILES $TEST_FILES
+#               TEST_CLASS=$(grep -l "public static void main" $TEST_FILES | head -n 1)
+#               TEST_CLASS_NAME=$(basename "$TEST_CLASS" .java)
+#               java tests.$TEST_CLASS_NAME
+#               cd ../..
+#             fi
+#           done
+
+
+
+
+
+
+
+
 name: Run DSA Problem Tests
 
 on:
@@ -23,7 +119,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc g++ build-essential
+          sudo apt-get install -y gcc g++ build-essential make
           
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -36,16 +132,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       
-      - name: Detect and run tests
+      - name: Detect Changed Files and Run Tests
         run: |
-          # Determine changed files
+          # Determine changed files for both solutions and tests
           if [ "${{ github.event_name }}" == "push" ]; then
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '^problems/.*/solutions/')
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '^problems/.*/solutions/|^problems/.*/tests/')
           elif [ "${{ github.event_name }}" == "pull_request" ]; then
             git fetch origin ${{ github.base_ref }} --depth=1
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -E '^problems/.*/solutions/')
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -E '^problems/.*/solutions/|^problems/.*/tests/')
           else
-            CHANGED_FILES=$(find problems -path "*/solutions/*" -type f)
+            CHANGED_FILES=$(find problems -path "*/solutions/*" -type f -o -path "*/tests/*" -type f)
           fi
           
           echo "Changed files: $CHANGED_FILES"
