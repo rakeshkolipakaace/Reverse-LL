@@ -159,47 +159,45 @@ jobs:
         run: |
           mkdir -p test_results
           
-          # Create symbolic links for solution files
+          # Create test environment
           mkdir -p temp
-          for file in $CHANGED_FILES; do
-            # Create solution.EXT in temp directory
-            ext="${file##*.}"
-            cp "$file" "temp/solution.$ext"
-            # Also create a link in working directory for direct inclusion
-            cp "$file" "solution.$ext"
-          done
           
-          # Run C tests
-          if [[ "$LANGUAGES" == *"C"* ]] && [ -f tests/test.c ]; then
+          # Run C tests if solution.c was changed
+          if [[ "$LANGUAGES" == *"C"* ]] && [ -f tests/test.c ] && [ -f solutions/solution.c ]; then
             echo "Running C tests..."
+            cp solutions/solution.c .
             gcc tests/test.c -o test_c
-            ./test_c > test_results/c_output.txt || echo "C tests failed" >> test_results/c_output.txt
+            ./test_c > test_results/c_output.txt 2>&1 || echo "C tests failed with exit code $?" >> test_results/c_output.txt
           fi
           
-          # Run C++ tests
-          if [[ "$LANGUAGES" == *"C++"* ]] && [ -f tests/test.cpp ]; then
+          # Run C++ tests if solution.cpp was changed
+          if [[ "$LANGUAGES" == *"C++"* ]] && [ -f tests/test.cpp ] && [ -f solutions/solution.cpp ]; then
             echo "Running C++ tests..."
+            cp solutions/solution.cpp .
             g++ -std=c++17 tests/test.cpp -o test_cpp
-            ./test_cpp > test_results/cpp_output.txt || echo "C++ tests failed" >> test_results/cpp_output.txt
+            ./test_cpp > test_results/cpp_output.txt 2>&1 || echo "C++ tests failed with exit code $?" >> test_results/cpp_output.txt
           fi
           
-          # Run Python tests
-          if [[ "$LANGUAGES" == *"Python"* ]] && [ -f tests/test.py ]; then
+          # Run Python tests if solution.py was changed
+          if [[ "$LANGUAGES" == *"Python"* ]] && [ -f tests/test.py ] && [ -f solutions/solution.py ]; then
             echo "Running Python tests..."
-            cp temp/solution.py . 2>/dev/null || true
-            PYTHONPATH=.:solutions python3 tests/test.py > test_results/python_output.txt || echo "Python tests failed" >> test_results/python_output.txt
+            # Make tests directory a proper Python package
+            touch tests/__init__.py
+            # Run the test
+            PYTHONPATH=.:solutions python3 tests/test.py > test_results/python_output.txt 2>&1 || echo "Python tests failed with exit code $?" >> test_results/python_output.txt
           fi
           
-          # Run Java tests
-          if [[ "$LANGUAGES" == *"Java"* ]] && [ -f tests/Test.java ]; then
+          # Run Java tests if Solution.java was changed
+          if [[ "$LANGUAGES" == *"Java"* ]] && [ -f tests/Test.java ] && [ -f solutions/Solution.java ]; then
             echo "Running Java tests..."
             mkdir -p out
-            cp temp/solution.java Solution.java 2>/dev/null || true
+            cp solutions/Solution.java .
             javac -d out tests/Test.java Solution.java
-            java -cp out tests.Test > test_results/java_output.txt || echo "Java tests failed" >> test_results/java_output.txt
+            java -cp out tests.Test > test_results/java_output.txt 2>&1 || echo "Java tests failed with exit code $?" >> test_results/java_output.txt
           fi
           
           # Display all test results
+          echo "Test Results:"
           cat test_results/*.txt || echo "No test results found"
 
       - name: Upload Results
