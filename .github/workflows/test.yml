@@ -135,9 +135,10 @@ jobs:
     name: Run C Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.message, 'solution.c') ||
-      contains(github.event.head_commit.message, 'test.c') ||
-      always()
+      contains(github.event.head_commit.added, 'solution.c') ||
+      contains(github.event.head_commit.modified, 'solution.c') ||
+      contains(github.event.head_commit.added, 'test.c') ||
+      contains(github.event.head_commit.modified, 'test.c')
     steps:
       - uses: actions/checkout@v4
       - name: Install gcc
@@ -151,9 +152,10 @@ jobs:
     name: Run C++ Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.message, 'solution.cpp') ||
-      contains(github.event.head_commit.message, 'test.cpp') ||
-      always()
+      contains(github.event.head_commit.added, 'solution.cpp') ||
+      contains(github.event.head_commit.modified, 'solution.cpp') ||
+      contains(github.event.head_commit.added, 'test.cpp') ||
+      contains(github.event.head_commit.modified, 'test.cpp')
     steps:
       - uses: actions/checkout@v4
       - name: Install g++
@@ -167,9 +169,10 @@ jobs:
     name: Run Java Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.message, 'Solution.java') ||
-      contains(github.event.head_commit.message, 'Test.java') ||
-      always()
+      contains(github.event.head_commit.added, 'Solution.java') ||
+      contains(github.event.head_commit.modified, 'Solution.java') ||
+      contains(github.event.head_commit.added, 'Test.java') ||
+      contains(github.event.head_commit.modified, 'Test.java')
     steps:
       - uses: actions/checkout@v4
       - name: Compile and run Java tests
@@ -181,9 +184,10 @@ jobs:
     name: Run Python Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.message, 'solution.py') ||
-      contains(github.event.head_commit.message, 'test.py') ||
-      always()
+      contains(github.event.head_commit.added, 'solution.py') ||
+      contains(github.event.head_commit.modified, 'solution.py') ||
+      contains(github.event.head_commit.added, 'test.py') ||
+      contains(github.event.head_commit.modified, 'test.py')
     steps:
       - uses: actions/checkout@v4
       - name: Run Python tests
