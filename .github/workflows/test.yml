@@ -119,6 +119,8 @@
 
 
 
+
+
 name: Multi-Language Solution Tester
 
 on:
@@ -134,7 +136,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       contains(github.event.head_commit.message, 'solution.c') ||
-      contains(github.event.head_commit.message, 'test.c')
+      contains(github.event.head_commit.message, 'test.c') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Install gcc
@@ -149,7 +152,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       contains(github.event.head_commit.message, 'solution.cpp') ||
-      contains(github.event.head_commit.message, 'test.cpp')
+      contains(github.event.head_commit.message, 'test.cpp') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Install g++
@@ -164,7 +168,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       contains(github.event.head_commit.message, 'Solution.java') ||
-      contains(github.event.head_commit.message, 'Test.java')
+      contains(github.event.head_commit.message, 'Test.java') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Compile and run Java tests
@@ -177,7 +182,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       contains(github.event.head_commit.message, 'solution.py') ||
-      contains(github.event.head_commit.message, 'test.py')
+      contains(github.event.head_commit.message, 'test.py') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Run Python tests
