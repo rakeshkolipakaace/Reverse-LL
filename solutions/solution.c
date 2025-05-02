@@ -8,7 +8,7 @@ struct ListNode {
     struct ListNode *next;
 };
 
-// Function to reverse a singly linked list................
+// Function to reverse a singly linked list.................
 struct ListNode* reverseList(struct ListNode* head) {
     struct ListNode* prev = NULL;
     struct ListNode* current = head;
