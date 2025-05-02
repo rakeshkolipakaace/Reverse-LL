@@ -7,6 +7,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from solution import Solution  # Importing the Solution class from solution.py
 
+# Define the ListNode class
+class ListNode(object):
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
 class TestReverseLinkedList(unittest.TestCase):
 
     # Helper function to convert list to linked list
