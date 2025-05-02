@@ -93,26 +93,107 @@
 
 
 
-name: C Solution Tester
+# name: C Solution Tester
+
+# on:
+#   push:
+#     paths:
+#       - "solutions/solution.c"
+#       - "tests/test.c"
+
+# jobs:
+#   run-c-tests:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Install gcc
+#         run: sudo apt-get update && sudo apt-get install -y gcc
+
+#       - name: Compile and run tests
+#         run: |
+#           cd "$GITHUB_WORKSPACE"
+#           # Compile as single translation unit
+#           gcc tests/test.c -o testrunner
+#           ./testrunner
+
+
+
+
+
+
+name: DSA Solution Tester
 
 on:
   push:
     paths:
       - "solutions/solution.c"
+      - "solutions/solution.cpp"
+      - "solutions/Solution.java"
+      - "solutions/solution.py"
       - "tests/test.c"
+      - "tests/test.cpp"
+      - "tests/Test.java"
+      - "tests/test_solution.py"
 
 jobs:
-  run-c-tests:
+  run-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: ['c', 'cpp', 'java', 'python']
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install gcc
+      - name: Detect changes
+        id: detect-changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before || 'HEAD~1' }} HEAD)
+          echo "C_CHANGED=$([[ "$CHANGED_FILES" == *"solution.c"* || "$CHANGED_FILES" == *"test.c"* ]] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+          echo "CPP_CHANGED=$([[ "$CHANGED_FILES" == *"solution.cpp"* || "$CHANGED_FILES" == *"test.cpp"* ]] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+          echo "JAVA_CHANGED=$([[ "$CHANGED_FILES" == *"Solution.java"* || "$CHANGED_FILES" == *"Test.java"* ]] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+          echo "PYTHON_CHANGED=$([[ "$CHANGED_FILES" == *"solution.py"* || "$CHANGED_FILES" == *"test_solution.py"* ]] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+
+      - name: Set up C
+        if: matrix.language == 'c' && steps.detect-changes.outputs.C_CHANGED == 'true'
         run: sudo apt-get update && sudo apt-get install -y gcc
 
-      - name: Compile and run tests
+      - name: Set up C++
+        if: matrix.language == 'cpp' && steps.detect-changes.outputs.CPP_CHANGED == 'true'
+        run: sudo apt-get update && sudo apt-get install -y g++
+
+      - name: Set up Java
+        if: matrix.language == 'java' && steps.detect-changes.outputs.JAVA_CHANGED == 'true'
+        run: sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
+
+      - name: Set up Python
+        if: matrix.language == 'python' && steps.detect-changes.outputs.PYTHON_CHANGED == 'true'
+        run: sudo apt-get update && sudo apt-get install -y python3 python3-pip
+
+      - name: Run C tests
+        if: matrix.language == 'c' && steps.detect-changes.outputs.C_CHANGED == 'true'
         run: |
           cd "$GITHUB_WORKSPACE"
-          # Compile as single translation unit
           gcc tests/test.c -o testrunner
           ./testrunner
+
+      - name: Run C++ tests
+        if: matrix.language == 'cpp' && steps.detect-changes.outputs.CPP_CHANGED == 'true'
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          g++ tests/test.cpp solutions/solution.cpp -o testrunner
+          ./testrunner
+
+      - name: Run Java tests
+        if: matrix.language == 'java' && steps.detect-changes.outputs.JAVA_CHANGED == 'true'
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          javac solutions/Solution.java tests/Test.java
+          java -cp solutions:tests Test
+
+      - name: Run Python tests
+        if: matrix.language == 'python' && steps.detect-changes.outputs.PYTHON_CHANGED == 'true'
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          pip install pytest
+          python -m pytest tests/test_solution.py -v
