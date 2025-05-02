@@ -28,6 +28,100 @@
 
 
 
+# name: Multi-Language Solution Tester
+
+# on:
+#   push:
+#     paths:
+#       - 'solutions/**'
+#       - 'tests/**'
+#       - '.github/workflows/test.yml'
+
+# jobs:
+#   filter:
+#     name: Check changed files
+#     runs-on: ubuntu-latest
+#     outputs:
+#       c: ${{ steps.filter.outputs.c }}
+#       cpp: ${{ steps.filter.outputs.cpp }}
+#       java: ${{ steps.filter.outputs.java }}
+#       python: ${{ steps.filter.outputs.python }}
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: dorny/paths-filter@v3
+#         id: filter
+#         with:
+#           filters: |
+#             c:
+#               - 'solutions/solution.c'
+#               - 'tests/test.c'
+#             cpp:
+#               - 'solutions/solution.cpp'
+#               - 'tests/test.cpp'
+#             java:
+#               - 'solutions/Solution.java'
+#               - 'tests/Test.java'
+#             python:
+#               - 'solutions/solution.py'
+#               - 'tests/test.py'
+
+#   test-c:
+#     name: Run C Tests
+#     needs: filter
+#     if: needs.filter.outputs.c == 'true'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Install gcc
+#         run: sudo apt-get update && sudo apt-get install -y gcc
+#       - name: Compile and run C tests
+#         run: |
+#           gcc tests/test.c -o c_testrunner
+#           ./c_testrunner
+
+#   test-cpp:
+#     name: Run C++ Tests
+#     needs: filter
+#     if: needs.filter.outputs.cpp == 'true'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Install g++
+#         run: sudo apt-get update && sudo apt-get install -y g++
+#       - name: Compile and run C++ tests
+#         run: |
+#           g++ tests/test.cpp -o cpp_testrunner
+#           ./cpp_testrunner
+
+#   test-java:
+#     name: Run Java Tests
+#     needs: filter
+#     if: needs.filter.outputs.java == 'true'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Compile and run Java tests
+#         run: |
+#           javac -d . solutions/Solution.java tests/Test.java
+#           java tests.Test
+
+#   test-python:
+#     name: Run Python Tests
+#     needs: filter
+#     if: needs.filter.outputs.python == 'true'
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - name: Run Python tests
+#         run: |
+#           python3 tests/test.py
+
+
+
+
+
+
+
 name: Multi-Language Solution Tester
 
 on:
@@ -46,6 +140,10 @@ jobs:
       cpp: ${{ steps.filter.outputs.cpp }}
       java: ${{ steps.filter.outputs.java }}
       python: ${{ steps.filter.outputs.python }}
+      c_has_return: ${{ steps.check-return.outputs.c_has_return }}
+      cpp_has_return: ${{ steps.check-return.outputs.cpp_has_return }}
+      java_has_return: ${{ steps.check-return.outputs.java_has_return }}
+      python_has_return: ${{ steps.check-return.outputs.python_has_return }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -64,11 +162,38 @@ jobs:
             python:
               - 'solutions/solution.py'
               - 'tests/test.py'
+      - name: Check for return statements in solution files
+        id: check-return
+        run: |
+          # Check for 'return' in C solution
+          if [ -f "solutions/solution.c" ] && grep -q "[[:space:]]*return[[:space:]]" "solutions/solution.c"; then
+            echo "c_has_return=true" >> $GITHUB_OUTPUT
+          else
+            echo "c_has_return=false" >> $GITHUB_OUTPUT
+          fi
+          # Check for 'return' in C++ solution
+          if [ -f "solutions/solution.cpp" ] && grep -q "[[:space:]]*return[[:space:]]" "solutions/solution.cpp"; then
+            echo "cpp_has_return=true" >> $GITHUB_OUTPUT
+          else
+            echo "cpp_has_return=false" >> $GITHUB_OUTPUT
+          fi
+          # Check for 'return' in Java solution
+          if [ -f "solutions/Solution.java" ] && grep -q "[[:space:]]*return[[:space:]]" "solutions/Solution.java"; then
+            echo "java_has_return=true" >> $GITHUB_OUTPUT
+          else
+            echo "java_has_return=false" >> $GITHUB_OUTPUT
+          fi
+          # Check for 'return' in Python solution
+          if [ -f "solutions/solution.py" ] && grep -q "[[:space:]]*return[[:space:]]" "solutions/solution.py"; then
+            echo "python_has_return=true" >> $GITHUB_OUTPUT
+          else
+            echo "python_has_return=false" >> $GITHUB_OUTPUT
+          fi
 
   test-c:
     name: Run C Tests
     needs: filter
-    if: needs.filter.outputs.c == 'true'
+    if: needs.filter.outputs.c == 'true' && needs.filter.outputs.c_has_return == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +207,7 @@ jobs:
   test-cpp:
     name: Run C++ Tests
     needs: filter
-    if: needs.filter.outputs.cpp == 'true'
+    if: needs.filter.outputs.cpp == 'true' && needs.filter.outputs.cpp_has_return == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +221,7 @@ jobs:
   test-java:
     name: Run Java Tests
     needs: filter
-    if: needs.filter.outputs.java == 'true'
+    if: needs.filter.outputs.java == 'true' && needs.filter.outputs.java_has_return == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +233,7 @@ jobs:
   test-python:
     name: Run Python Tests
     needs: filter
-    if: needs.filter.outputs.python == 'true'
+    if: needs.filter.outputs.python == 'true' && needs.filter.outputs.python_has_return == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
