@@ -1,13 +1,24 @@
 import unittest
-import sys
-import os
-
-# Ensure Python finds the 'solutions' package
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from solutions.reverse_linked_list import Solution, list_to_linkedlist, linkedlist_to_list
+from solution import Solution
 
 class TestReverseLinkedList(unittest.TestCase):
+    
+    # Helper functions to convert between list and linked list
+    def list_to_linkedlist(self, elements):
+        head = ListNode(0)
+        current = head
+        for number in elements:
+            current.next = ListNode(number)
+            current = current.next
+        return head.next
+
+    def linkedlist_to_list(self, node):
+        result = []
+        while node:
+            result.append(node.val)
+            node = node.next
+        return result
+
     def setUp(self):
         self.solution = Solution()
 
@@ -40,9 +51,9 @@ class TestReverseLinkedList(unittest.TestCase):
             print(f"Running: Test {i + 1}")
             print(f"Input: {input_list}")
             print(f"Expected Output: {expected_output}")
-            head = list_to_linkedlist(input_list)
+            head = self.list_to_linkedlist(input_list)
             reversed_head = self.solution.reverseList(head)
-            result = linkedlist_to_list(reversed_head)
+            result = self.linkedlist_to_list(reversed_head)
             print(f"Actual Output: {result}")
             self.assertEqual(result, expected_output)
             print(f"Test {i + 1}: ✅ PASSED")
