@@ -1,11 +1,9 @@
 cpp local compile 
 
 
-PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum\solutions> cd "C:\Users\k.Rakesh\OneDrive\Desktop\3sum"
-PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> g++ solutions/solution.cpp tests/test.cpp -o run_tests.exe
-PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> .\run_tests.exe
-
-
+git add solutions/solution.cpp tests/test.cpp
+git commit -m "Cpp: Add test cases1.2"
+git push
 
 
 
