@@ -183,7 +183,9 @@ void runTest(int* arr, int size, const char* description) {
         printf("Result: PASSED ✅\n\n");
     } else {
         printf("Result: FAILED ❌\n\n");
+        exit(1);  // Fails the test runner if even one test fails
     }
+    
 
     free(reversedArr);
     freeList(expectedList);
