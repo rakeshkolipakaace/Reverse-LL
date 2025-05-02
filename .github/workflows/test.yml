@@ -135,12 +135,16 @@ jobs:
     name: Run C Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.added, 'solution.c') ||
       contains(github.event.head_commit.modified, 'solution.c') ||
-      contains(github.event.head_commit.added, 'test.c') ||
-      contains(github.event.head_commit.modified, 'test.c')
+      contains(github.event.head_commit.added, 'solution.c') ||
+      contains(github.event.head_commit.modified, 'test.c') ||
+      contains(github.event.head_commit.added, 'test.c')
     steps:
       - uses: actions/checkout@v4
+      - name: Debug - Print Changed Files
+        run: |
+          echo "Modified files: ${{ github.event.head_commit.modified }}"
+          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Install gcc
         run: sudo apt-get update && sudo apt-get install -y gcc
       - name: Compile and run C tests
@@ -152,12 +156,16 @@ jobs:
     name: Run C++ Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.added, 'solution.cpp') ||
       contains(github.event.head_commit.modified, 'solution.cpp') ||
-      contains(github.event.head_commit.added, 'test.cpp') ||
-      contains(github.event.head_commit.modified, 'test.cpp')
+      contains(github.event.head_commit.added, 'solution.cpp') ||
+      contains(github.event.head_commit.modified, 'test.cpp') ||
+      contains(github.event.head_commit.added, 'test.cpp')
     steps:
       - uses: actions/checkout@v4
+      - name: Debug - Print Changed Files
+        run: |
+          echo "Modified files: ${{ github.event.head_commit.modified }}"
+          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Install g++
         run: sudo apt-get update && sudo apt-get install -y g++
       - name: Compile and run C++ tests
@@ -169,12 +177,16 @@ jobs:
     name: Run Java Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.added, 'Solution.java') ||
       contains(github.event.head_commit.modified, 'Solution.java') ||
-      contains(github.event.head_commit.added, 'Test.java') ||
-      contains(github.event.head_commit.modified, 'Test.java')
+      contains(github.event.head_commit.added, 'Solution.java') ||
+      contains(github.event.head_commit.modified, 'Test.java') ||
+      contains(github.event.head_commit.added, 'Test.java')
     steps:
       - uses: actions/checkout@v4
+      - name: Debug - Print Changed Files
+        run: |
+          echo "Modified files: ${{ github.event.head_commit.modified }}"
+          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Compile and run Java tests
         run: |
           javac -d . solutions/Solution.java tests/Test.java
@@ -184,12 +196,16 @@ jobs:
     name: Run Python Tests
     runs-on: ubuntu-latest
     if: |
-      contains(github.event.head_commit.added, 'solution.py') ||
       contains(github.event.head_commit.modified, 'solution.py') ||
-      contains(github.event.head_commit.added, 'test.py') ||
-      contains(github.event.head_commit.modified, 'test.py')
+      contains(github.event.head_commit.added, 'solution.py') ||
+      contains(github.event.head_commit.modified, 'test.py') ||
+      contains(github.event.head_commit.added, 'test.py')
     steps:
       - uses: actions/checkout@v4
+      - name: Debug - Print Changed Files
+        run: |
+          echo "Modified files: ${{ github.event.head_commit.modified }}"
+          echo "Added files: ${{ github.event.head_commit.added }}"
       - name: Run Python tests
         run: |
           python3 tests/test.py
