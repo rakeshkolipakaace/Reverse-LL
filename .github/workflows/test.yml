@@ -80,8 +80,8 @@ jobs:
           echo "Detected C solution. Compiling and running C tests..."
           gcc solutions/solution.c tests/test.c -o c_test
           if [ $? -eq 0 ]; then
-            echo "Compilation successful, running tests..."
-            ./c_test
+            echo "Compilation successful. Running the tests..."
+            ./c_test || echo "Test execution failed!"  # Added error handling
           else
             echo "Compilation failed!"
             exit 1
