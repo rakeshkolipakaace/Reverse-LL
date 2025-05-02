@@ -2,8 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "solution.c"  // include the reverseList logic from solution.c
-
+#include "../solutions/solution.c"  // Use relative path
 // Utility: Create linked list from array
 struct ListNode* createList(int* arr, int size) {
     if (size == 0) return NULL;
