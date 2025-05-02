@@ -107,48 +107,55 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up environment
-        run: |
-          # Quiet apt-get to avoid warnings
-          sudo apt-get -qq update
-          sudo apt-get -qq install -y \
-            $(grep -q "C" <<< "$LANGUAGES" && echo "gcc") \
-            $(grep -q "C++" <<< "$LANGUAGES" && echo "g++") \
-            $(grep -q "Python" <<< "$LANGUAGES" && echo "python3 python3-pip") \
-            $(grep -q "Java" <<< "$LANGUAGES" && echo "openjdk-17-jdk-headless")
-          
       - name: Detect languages
         id: detect-lang
         run: |
           LANGUAGES=""
-          for file in solutions/*; do
-            case "$file" in
-              *.c) LANGUAGES+="C " ;;
-              *.cpp) LANGUAGES+="C++ " ;;
-              *.py) LANGUAGES+="Python " ;;
-              *.java) LANGUAGES+="Java " ;;
-            esac
-          done
+          [ -f solutions/solution.c ] && LANGUAGES+="C "
+          [ -f solutions/solution.cpp ] && LANGUAGES+="C++ "
+          [ -f solutions/solution.py ] && LANGUAGES+="Python "
+          [ -f solutions/Solution.java ] && LANGUAGES+="Java "
           echo "languages=${LANGUAGES% }" >> $GITHUB_OUTPUT
           echo "Detected: ${LANGUAGES% }"
 
+      - name: Set up environment
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y \
+            $(grep -q "C" <<< "${{ steps.detect-lang.outputs.languages }}" && echo "gcc") \
+            $(grep -q "C++" <<< "${{ steps.detect-lang.outputs.languages }}" && echo "g++") \
+            $(grep -q "Python" <<< "${{ steps.detect-lang.outputs.languages }}" && echo "python3 python3-pip") \
+            $(grep -q "Java" <<< "${{ steps.detect-lang.outputs.languages }}" && echo "openjdk-17-jdk-headless")
+
       - name: Run tests
         run: |
-          set +e  # Don't fail immediately on test failures
-          for lang in ${{ steps.detect-lang.outputs.languages }}; do
-            echo "=== Testing $lang ==="
-            case "$lang" in
-              C)
-                gcc solutions/*.c tests/*.c -o testrunner && ./testrunner
-                ;;
-              C++)
-                g++ -std=c++17 solutions/*.cpp tests/*.cpp -o testrunner && ./testrunner
-                ;;
-              Python)
-                pip install pytest && pytest tests/ -v
-                ;;
-              Java)
-                javac solutions/*.java tests/*.java && java -cp . TestRunner
-                ;;
-            esac
-          done
+          set +e  # Continue on test failures
+          cd "$GITHUB_WORKSPACE"
+          
+          # Java
+          if [[ "${{ steps.detect-lang.outputs.languages }}" == *"Java"* ]]; then
+            echo "=== Testing Java ==="
+            javac solutions/Solution.java tests/Test.java
+            java -cp solutions:tests Test
+          fi
+          
+          # C
+          if [[ "${{ steps.detect-lang.outputs.languages }}" == *"C"* ]]; then
+            echo "=== Testing C ==="
+            gcc -I solutions tests/test.c solutions/solution.c -o testrunner
+            ./testrunner
+          fi
+          
+          # C++
+          if [[ "${{ steps.detect-lang.outputs.languages }}" == *"C++"* ]]; then
+            echo "=== Testing C++ ==="
+            g++ -I solutions -std=c++17 tests/test.cpp solutions/solution.cpp -o testrunner
+            ./testrunner
+          fi
+          
+          # Python
+          if [[ "${{ steps.detect-lang.outputs.languages }}" == *"Python"* ]]; then
+            echo "=== Testing Python ==="
+            pip install pytest
+            PYTHONPATH=$GITHUB_WORKSPACE pytest tests/test_solution.py -v
+          fi
