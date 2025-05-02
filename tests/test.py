@@ -1,6 +1,11 @@
 import unittest
 from solution import Solution
 
+class ListNode(object):
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
 class TestReverseLinkedList(unittest.TestCase):
     
     # Helper functions to convert between list and linked list
