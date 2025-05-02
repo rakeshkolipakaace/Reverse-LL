@@ -18,6 +18,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install GCC (if not available)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc
+
       - name: Detect changed solution file and valid code
         id: detect
         run: |
@@ -71,7 +76,9 @@ jobs:
       - name: Run C Tests
         if: steps.detect.outputs.lang == 'c' && steps.detect.outputs.valid_code == 'true'
         run: |
-          gcc solutions/solution.c tests/test.c -o c_test && ./c_test
+          echo "Compiling and running C tests..."
+          gcc solutions/solution.c tests/test.c -o c_test
+          ./c_test
 
       - name: Run C++ Tests
         if: steps.detect.outputs.lang == 'cpp' && steps.detect.outputs.valid_code == 'true'
