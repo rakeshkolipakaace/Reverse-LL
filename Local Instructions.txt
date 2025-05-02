@@ -18,9 +18,10 @@ PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> python -u "c:\Users\k.Rakesh\OneDriv
 c 
 
 
-PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> gcc solutions/solution.c tests/test.c -o three_sum.exe
-PS C:\Users\k.Rakesh\OneDrive\Desktop\3sum> .\three_sum.exe    
-
+git add solutions/solution.c tests/test.c
+git commit -m "C: Add test cases3.12"
+git push
+ 
 
 
 
