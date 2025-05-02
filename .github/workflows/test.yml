@@ -1,98 +1,85 @@
-name: Run DSA Problem Tests
+name: Test Solutions
 
 on:
   push:
-    paths:
-      - 'problems/*/solutions/**'
-      - 'problems/*/tests/**'
+    branches: [ "main" ]
   pull_request:
-    paths:
-      - 'problems/*/solutions/**'
-      - 'problems/*/tests/**'
+    branches: [ "main" ]
 
 jobs:
-  test:
+  check-empty:
     runs-on: ubuntu-latest
-    
+    outputs:
+      should-run: ${{ steps.check-files.outputs.should-run }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
+      - uses: actions/checkout@v3
       
-      - name: Install dependencies
+      - name: Check if solution files are non-empty
+        id: check-files
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc g++ build-essential make python3 python3-pip
+          # Check each solution file and set output if any is non-empty
+          should_run=false
+          for file in solution.c solution.cpp Solution.java solution.py; do
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              echo "Found non-empty solution file: $file"
+              should_run=true
+            fi
+          done
+          
+          if [ "$should_run" = true ]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+          else
+            echo "All solution files are empty or missing"
+            echo "should-run=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Setup Python
+  run-tests:
+    needs: check-empty
+    if: needs.check-empty.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        language: [c, cpp, java, python]
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        if: matrix.language == 'python'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
           
-      - name: Setup Java
+      - name: Set up JDK
+        if: matrix.language == 'java'
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
-      
-      - name: Debug Changed Files
+          java-version: '11'
+          distribution: 'adopt'
+          
+      - name: Set up C/C++
+        if: matrix.language == 'c' || matrix.language == 'cpp'
+        run: sudo apt-get update && sudo apt-get install -y gcc g++
+        
+      - name: Run Python tests
+        if: matrix.language == 'python'
         run: |
-          echo "Checking for changes in 'problems/*/solutions/**' and 'problems/*/tests/**' paths..."
+          python -m pip install pytest
+          python -m pytest tests/test_solution.py -v
           
-          if [ "${{ github.event_name }}" == "push" ]; then
-            # Show changed files in the push event
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '^problems/.*/solutions/|^problems/.*/tests/')
-          elif [ "${{ github.event_name }}" == "pull_request" ]; then
-            # Show changed files in a PR event
-            git fetch origin ${{ github.base_ref }} --depth=1
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -E '^problems/.*/solutions/|^problems/.*/tests/')
-          else
-            # For other cases, simply find all solution/test files
-            CHANGED_FILES=$(find problems -path "*/solutions/*" -type f -o -path "*/tests/*" -type f)
-          fi
-          
-          echo "Changed files detected: $CHANGED_FILES"
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No relevant changes detected. Exiting."
-            exit 0
-          fi
-          
-      - name: Run Tests for Changed Files
+      - name: Run Java tests
+        if: matrix.language == 'java'
         run: |
-          # Process each changed file and run corresponding tests
-          for FILE in $CHANGED_FILES; do
-            PROBLEM=$(echo $FILE | cut -d'/' -f2)
-            echo "Processing: $FILE for problem: $PROBLEM"
-            
-            if [[ "$FILE" == *.py ]]; then
-              echo "Running Python tests for $PROBLEM"
-              cd problems/$PROBLEM
-              python3 -m unittest discover -s tests -p 'test_*.py'
-              cd ../..
-            elif [[ "$FILE" == *.c ]]; then
-              echo "Running C tests for $PROBLEM"
-              cd problems/$PROBLEM
-              SOLUTION_FILE=$(find solutions -name "*.c" | head -n 1)
-              TEST_FILE=$(find tests -name "*.c" | head -n 1)
-              gcc -Wall -I./solutions -I./tests "$SOLUTION_FILE" "$TEST_FILE" -o c_test && ./c_test
-              cd ../..
-            elif [[ "$FILE" == *.cpp ]]; then
-              echo "Running C++ tests for $PROBLEM"
-              cd problems/$PROBLEM
-              SOLUTION_FILE=$(find solutions -name "*.cpp" | head -n 1)
-              TEST_FILE=$(find tests -name "*.cpp" | head -n 1)
-              g++ -Wall -I./solutions -I./tests "$SOLUTION_FILE" "$TEST_FILE" -o cpp_test && ./cpp_test
-              cd ../..
-            elif [[ "$FILE" == *.java ]]; then
-              echo "Running Java tests for $PROBLEM"
-              cd problems/$PROBLEM
-              SOLUTION_FILES=$(find solutions -name "*.java")
-              TEST_FILES=$(find tests -name "*.java")
-              javac -d . $SOLUTION_FILES $TEST_FILES
-              TEST_CLASS=$(grep -l "public static void main" $TEST_FILES | head -n 1)
-              TEST_CLASS_NAME=$(basename "$TEST_CLASS" .java)
-              java tests.$TEST_CLASS_NAME
-              cd ../..
-            fi
-          done
+          javac Solution.java Test.java
+          java Test
+          
+      - name: Run C tests
+        if: matrix.language == 'c'
+        run: |
+          gcc solution.c test.c -o test_program
+          ./test_program
+          
+      - name: Run C++ tests
+        if: matrix.language == 'cpp'
+        run: |
+          g++ solution.cpp test.cpp -o test_program
+          ./test_program
