@@ -51,12 +51,10 @@ void runTest(const std::vector<int>& arr, const std::vector<int>& expectedArr, c
     Solution solution;
     ListNode* inputList = createList(arr);
     ListNode* expectedList = createList(expectedArr);
-    ListNode* resultList = solution.reverseList(inputList);
+    ListNode* resultList = solution.reverseList(inputList);  // inputList is now part of resultList
 
     bool passed = compareLists(resultList, expectedList);
     std::cout << "Test: " << description << std::endl;
-    std::cout << "Input: ";
-    printList(inputList);
     std::cout << "Expected: ";
     printList(expectedList);
     std::cout << "Result: ";
@@ -65,10 +63,10 @@ void runTest(const std::vector<int>& arr, const std::vector<int>& expectedArr, c
     std::cout << "---------------------------------------------" << std::endl;
 
     // Free allocated memory
-    freeList(inputList);
     freeList(expectedList);
-    freeList(resultList);
+    freeList(resultList);  // Don't free inputList separately; it's already reversed and used as resultList
 }
+
 
 int main() {
     // Test cases
