@@ -93,77 +93,32 @@
 
 
 
-name: DSA Solution Tester
+name: C Solution Tester
 
 on:
   push:
     paths:
-      - "solutions/**"
+      - "solutions/solution.c"
+      - "tests/test.c"
 
 jobs:
-  run-tests:
+  run-c-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2  # Required for git diff
 
-      - name: Detect changed language
-        id: detect-lang
-        run: |
-          # Handle first push/new branch cases
-          if [ -z "${{ github.event.before }}" ] || ! git rev-parse "${{ github.event.before }}" >/dev/null 2>&1; then
-            echo "Initial push detected, checking all solution files"
-            CHANGED_FILES=$(find solutions/ -type f -name "solution.*" -o -name "Solution.*")
-          else
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} HEAD -- solutions/)
-          fi
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc
 
-          echo "Changed files: $CHANGED_FILES"
-          
-          # Determine language from file extension
-          case "$CHANGED_FILES" in
-            *".c")   echo "language=C" >> $GITHUB_OUTPUT ;;
-            *".cpp") echo "language=C++" >> $GITHUB_OUTPUT ;;
-            *".java") echo "language=Java" >> $GITHUB_OUTPUT ;;
-            *".py")  echo "language=Python" >> $GITHUB_OUTPUT ;;
-            *)       echo "No supported files changed" && exit 0 ;;
-          esac
-
-      - name: Set up environment
-        if: steps.detect-lang.outputs.language
-        run: |
-          sudo apt-get -qq update
-          case "${{ steps.detect-lang.outputs.language }}" in
-            C)      sudo apt-get -qq install -y gcc ;;
-            C++)    sudo apt-get -qq install -y g++ ;;
-            Java)   sudo apt-get -qq install -y openjdk-17-jdk-headless ;;
-            Python) sudo apt-get -qq install -y python3 python3-pip ;;
-          esac
-
-      - name: Run tests
-        if: steps.detect-lang.outputs.language
+      - name: Compile and run tests
         run: |
           cd "$GITHUB_WORKSPACE"
-          case "${{ steps.detect-lang.outputs.language }}" in
-            C)
-              echo "=== Running C Tests ==="
-              gcc -I solutions tests/test.c solutions/solution.c -o testrunner
-              ./testrunner
-              ;;
-            C++)
-              echo "=== Running C++ Tests ==="
-              g++ -I solutions -std=c++17 tests/test.cpp solutions/solution.cpp -o testrunner
-              ./testrunner
-              ;;
-            Java)
-              echo "=== Running Java Tests ==="
-              javac solutions/Solution.java tests/Test.java
-              java -cp solutions:tests Test
-              ;;
-            Python)
-              echo "=== Running Python Tests ==="
-              pip install pytest
-              PYTHONPATH=. pytest tests/test_solution.py -v
-              ;;
-          esac
+          echo "=== Compiling C Tests ==="
+          
+          # Compile test runner (solution as library)
+          gcc -c solutions/solution.c -o solution.o
+          gcc -c tests/test.c -o test.o
+          gcc solution.o test.o -o testrunner
+          
+          echo "=== Running C Tests ==="
+          ./testrunner
