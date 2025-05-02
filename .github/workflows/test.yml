@@ -3,12 +3,12 @@ name: Run DSA Problem Tests
 on:
   push:
     paths:
-      - 'solutions/**'
-      - 'tests/**'
+      - 'problems/*/solutions/**'
+      - 'problems/*/tests/**'
   pull_request:
     paths:
-      - 'solutions/**'
-      - 'tests/**'
+      - 'problems/*/solutions/**'
+      - 'problems/*/tests/**'
 
 jobs:
   test:
@@ -18,167 +18,71 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 2  # To allow checking files changed in push events
+          fetch-depth: 2
       
-      - name: Install GCC and development tools
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc g++ build-essential
-      
-      - name: Detect changed solution files
-        id: detect
-        run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            # For push events
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep '^solutions/' || true)
-          elif [ "${{ github.event_name }}" == "pull_request" ]; then
-            # For PR events
-            git fetch origin ${{ github.base_ref }} --depth=1
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep '^solutions/' || true)
-          else
-            # Fallback - check all solution files
-            CHANGED_FILES=$(find solutions -type f -name "solution.*" -o -name "Solution.java")
-          fi
           
-          echo "Changed files: $CHANGED_FILES"
-          
-          # Default values
-          LANG=""
-          VALID_CODE=false
-          
-          # Check each changed file
-          for FILE in $CHANGED_FILES; do
-            echo "Processing file: $FILE"
-            
-            case "$FILE" in
-              solutions/solution.py)
-                LANG="python"
-                # Check if file contains actual code (not just comments or returns)
-                CODE=$(grep -vE '^\s*($|#)' $FILE | tr -d '[:space:]')
-                if [[ -n "$CODE" && ! "$CODE" =~ ^(return.*|pass)$ ]]; then 
-                  VALID_CODE=true
-                fi
-                ;;
-              solutions/solution.c)
-                LANG="c"
-                # Check if file contains actual code (not just comments or returns)
-                CODE=$(grep -vE '^\s*($|//|/\*|\*)' $FILE | tr -d '[:space:]')
-                if [[ -n "$CODE" && ! "$CODE" =~ ^(return[0-9a-zA-Z_]*;?)$ ]]; then 
-                  VALID_CODE=true
-                fi
-                ;;
-              solutions/solution.cpp)
-                LANG="cpp"
-                # Check if file contains actual code (not just comments or returns)
-                CODE=$(grep -vE '^\s*($|//|/\*|\*)' $FILE | tr -d '[:space:]')
-                if [[ -n "$CODE" && ! "$CODE" =~ ^(return[0-9a-zA-Z_]*;?)$ ]]; then 
-                  VALID_CODE=true
-                fi
-                ;;
-              solutions/Solution.java)
-                LANG="java"
-                # Check if file contains actual code (not just comments or returns)
-                CODE=$(grep -vE '^\s*($|//|/\*|\*/)' $FILE | tr -d '[:space:]')
-                if [[ -n "$CODE" && ! "$CODE" =~ ^(return.*;?)$ ]]; then 
-                  VALID_CODE=true
-                fi
-                ;;
-            esac
-          done
-          
-          echo "Language detected: $LANG"
-          echo "Valid code: $VALID_CODE"
-          
-          echo "lang=$LANG" >> $GITHUB_OUTPUT
-          echo "valid_code=$VALID_CODE" >> $GITHUB_OUTPUT
-      
-      - name: Debug Information
-        run: |
-          echo "Language detected: ${{ steps.detect.outputs.lang }}"
-          echo "Valid code: ${{ steps.detect.outputs.valid_code }}"
-          ls -la solutions/
-          ls -la tests/
-          
-          if [ "${{ steps.detect.outputs.lang }}" == "c" ]; then
-            echo "C file content:"
-            cat solutions/solution.c
-            echo "C test content:"
-            cat tests/test.c
-          fi
-      
       - name: Setup Python
-        if: steps.detect.outputs.lang == 'python' && steps.detect.outputs.valid_code == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      
-      - name: Run Python Tests
-        if: steps.detect.outputs.lang == 'python' && steps.detect.outputs.valid_code == 'true'
-        run: |
-          python3 -m unittest discover -s tests -p 'test_*.py'
-      
-      - name: Run C Tests
-        if: steps.detect.outputs.lang == 'c' && steps.detect.outputs.valid_code == 'true'
-        run: |
-          echo "Detected C solution. Compiling and running C tests..."
           
-          # Display compiler version
-          gcc --version
-          
-          # Check if test.c includes solution.c directly
-          if grep -q '#include "solution.c"' tests/test.c; then
-            echo "Test directly includes solution.c - Compiling only test.c..."
-            # Compile only test.c (which already includes solution.c)
-            gcc -Wall -Wextra -I./solutions -I./tests tests/test.c -o c_test
-          else
-            echo "Compiling both solution.c and test.c..."
-            # Compile both files
-            gcc -Wall -Wextra -I./solutions -I./tests solutions/solution.c tests/test.c -o c_test
-          fi
-          
-          # Check compilation result
-          if [ $? -eq 0 ]; then
-            echo "Compilation successful. Running the tests..."
-            ./c_test
-            TEST_RESULT=$?
-            if [ $TEST_RESULT -ne 0 ]; then
-              echo "Test execution failed with exit code $TEST_RESULT"
-              exit $TEST_RESULT
-            fi
-          else
-            echo "Compilation failed!"
-            exit 1
-          fi
-      
-      - name: Run C++ Tests
-        if: steps.detect.outputs.lang == 'cpp' && steps.detect.outputs.valid_code == 'true'
-        run: |
-          echo "Detected C++ solution. Compiling and running C++ tests..."
-          g++ -Wall -Wextra -I./solutions -I./tests solutions/solution.cpp tests/test.cpp -o cpp_test
-          
-          # Check compilation result
-          if [ $? -eq 0 ]; then
-            echo "Compilation successful. Running the tests..."
-            ./cpp_test
-            TEST_RESULT=$?
-            if [ $TEST_RESULT -ne 0 ]; then
-              echo "Test execution failed with exit code $TEST_RESULT"
-              exit $TEST_RESULT
-            fi
-          else
-            echo "Compilation failed!"
-            exit 1
-          fi
-      
       - name: Setup Java
-        if: steps.detect.outputs.lang == 'java' && steps.detect.outputs.valid_code == 'true'
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
       
-      - name: Run Java Tests
-        if: steps.detect.outputs.lang == 'java' && steps.detect.outputs.valid_code == 'true'
+      - name: Detect and run tests
         run: |
-          javac solutions/Solution.java tests/Test.java
-          java -cp . tests.Test
+          # Determine changed files
+          if [ "${{ github.event_name }}" == "push" ]; then
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '^problems/.*/solutions/')
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            git fetch origin ${{ github.base_ref }} --depth=1
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep -E '^problems/.*/solutions/')
+          else
+            CHANGED_FILES=$(find problems -path "*/solutions/*" -type f)
+          fi
+          
+          echo "Changed files: $CHANGED_FILES"
+          
+          # Process each changed file
+          for FILE in $CHANGED_FILES; do
+            # Extract problem name and determine language
+            PROBLEM=$(echo $FILE | cut -d'/' -f2)
+            
+            if [[ "$FILE" == *.py ]]; then
+              echo "Running Python tests for $PROBLEM"
+              cd problems/$PROBLEM
+              python3 -m unittest discover -s tests -p 'test_*.py'
+              cd ../..
+            elif [[ "$FILE" == *.c ]]; then
+              echo "Running C tests for $PROBLEM"
+              cd problems/$PROBLEM
+              SOLUTION_FILE=$(find solutions -name "*.c" | head -n 1)
+              TEST_FILE=$(find tests -name "*.c" | head -n 1)
+              gcc -Wall -I./solutions -I./tests "$SOLUTION_FILE" "$TEST_FILE" -o c_test && ./c_test
+              cd ../..
+            elif [[ "$FILE" == *.cpp ]]; then
+              echo "Running C++ tests for $PROBLEM"
+              cd problems/$PROBLEM
+              SOLUTION_FILE=$(find solutions -name "*.cpp" | head -n 1)
+              TEST_FILE=$(find tests -name "*.cpp" | head -n 1)
+              g++ -Wall -I./solutions -I./tests "$SOLUTION_FILE" "$TEST_FILE" -o cpp_test && ./cpp_test
+              cd ../..
+            elif [[ "$FILE" == *.java ]]; then
+              echo "Running Java tests for $PROBLEM"
+              cd problems/$PROBLEM
+              SOLUTION_FILES=$(find solutions -name "*.java")
+              TEST_FILES=$(find tests -name "*.java")
+              javac -d . $SOLUTION_FILES $TEST_FILES
+              TEST_CLASS=$(grep -l "public static void main" $TEST_FILES | head -n 1)
+              TEST_CLASS_NAME=$(basename "$TEST_CLASS" .java)
+              java tests.$TEST_CLASS_NAME
+              cd ../..
+            fi
+          done
