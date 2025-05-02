@@ -1,5 +1,11 @@
 import unittest
-from solutions.solution import Solution   # Importing the Solution class from solution.py
+import sys
+import os
+
+# Ensure Python finds the 'solutions' folder where solution.py is located
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'solutions')))
+
+from solution import Solution  # Importing the Solution class from solution.py
 
 class TestReverseLinkedList(unittest.TestCase):
 
