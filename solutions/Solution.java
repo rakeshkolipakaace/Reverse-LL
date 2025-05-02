@@ -20,7 +20,6 @@ public class Solution {
 
     // Function to reverse the linked list
     public ListNode reverseList(ListNode head) {
-        return head;
 
        // write your code here
     }
