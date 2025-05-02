@@ -122,81 +122,71 @@
 
 
 
-name: DSA Solution Tester
+name: Multi-Language Solution Tester
 
 on:
   push:
     paths:
       - "solutions/**"
       - "tests/**"
+      - ".github/workflows/test.yml"
 
 jobs:
-  run-tests:
+  test-c:
+    name: Run C Tests
     runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.message, 'solution.c') ||
+      contains(github.event.head_commit.message, 'test.c') ||
+      always()
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2  # Required for git diff
-
-      - name: Detect changed language
-        id: detect-lang
-        run: |
-          # Handle cases where github.event.before doesn't exist
-          if [ -z "${{ github.event.before }}" ] || ! git rev-parse "${{ github.event.before }}" >/dev/null 2>&1; then
-            # First commit or shallow clone - check all solution files
-            [ -f solutions/solution.c ] && echo "C_CHANGED=true" >> $GITHUB_OUTPUT
-            [ -f solutions/solution.cpp ] && echo "CPP_CHANGED=true" >> $GITHUB_OUTPUT
-            [ -f solutions/Solution.java ] && echo "JAVA_CHANGED=true" >> $GITHUB_OUTPUT
-            [ -f solutions/solution.py ] && echo "PYTHON_CHANGED=true" >> $GITHUB_OUTPUT
-          else
-            # Normal case - check diff
-            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} HEAD)
-            [[ "$CHANGED_FILES" == *"solution.c"* || "$CHANGED_FILES" == *"test.c"* ]] && echo "C_CHANGED=true" >> $GITHUB_OUTPUT
-            [[ "$CHANGED_FILES" == *"solution.cpp"* || "$CHANGED_FILES" == *"test.cpp"* ]] && echo "CPP_CHANGED=true" >> $GITHUB_OUTPUT
-            [[ "$CHANGED_FILES" == *"Solution.java"* || "$CHANGED_FILES" == *"Test.java"* ]] && echo "JAVA_CHANGED=true" >> $GITHUB_OUTPUT
-            [[ "$CHANGED_FILES" == *"solution.py"* || "$CHANGED_FILES" == *"test_solution.py"* ]] && echo "PYTHON_CHANGED=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set up C
-        if: steps.detect-lang.outputs.C_CHANGED == 'true'
+      - name: Install gcc
         run: sudo apt-get update && sudo apt-get install -y gcc
+      - name: Compile and run C tests
+        run: |
+          gcc tests/test.c -o c_testrunner
+          ./c_testrunner
 
-      - name: Set up C++
-        if: steps.detect-lang.outputs.CPP_CHANGED == 'true'
+  test-cpp:
+    name: Run C++ Tests
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.message, 'solution.cpp') ||
+      contains(github.event.head_commit.message, 'test.cpp') ||
+      always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install g++
         run: sudo apt-get update && sudo apt-get install -y g++
-
-      - name: Set up Java
-        if: steps.detect-lang.outputs.JAVA_CHANGED == 'true'
-        run: sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
-
-      - name: Set up Python
-        if: steps.detect-lang.outputs.PYTHON_CHANGED == 'true'
-        run: sudo apt-get update && sudo apt-get install -y python3 python3-pip
-
-      - name: Run C tests
-        if: steps.detect-lang.outputs.C_CHANGED == 'true'
+      - name: Compile and run C++ tests
         run: |
-          cd "$GITHUB_WORKSPACE"
-          gcc tests/test.c -o testrunner
-          ./testrunner
+          g++ tests/test.cpp -o cpp_testrunner
+          ./cpp_testrunner
 
-      - name: Run C++ tests
-        if: steps.detect-lang.outputs.CPP_CHANGED == 'true'
+  test-java:
+    name: Run Java Tests
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.message, 'Solution.java') ||
+      contains(github.event.head_commit.message, 'Test.java') ||
+      always()
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and run Java tests
         run: |
-          cd "$GITHUB_WORKSPACE"
-          g++ tests/test.cpp solutions/solution.cpp -o testrunner
-          ./testrunner
+          javac -d . solutions/Solution.java tests/Test.java
+          java tests.Test
 
-      - name: Run Java tests
-        if: steps.detect-lang.outputs.JAVA_CHANGED == 'true'
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          javac solutions/Solution.java tests/Test.java
-          java -cp solutions:tests Test
-
+  test-python:
+    name: Run Python Tests
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.message, 'solution.py') ||
+      contains(github.event.head_commit.message, 'test.py') ||
+      always()
+    steps:
+      - uses: actions/checkout@v4
       - name: Run Python tests
-        if: steps.detect-lang.outputs.PYTHON_CHANGED == 'true'
         run: |
-          cd "$GITHUB_WORKSPACE"
-          pip install pytest
-          python -m pytest tests/test_solution.py -v
+          python3 tests/test.py
