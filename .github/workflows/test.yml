@@ -35,6 +35,7 @@ jobs:
           valid_code=false
 
           for file in $changed_file; do
+            echo "Processing file: $file"  # Debugging line
             case "$file" in
               solutions/solution.py)
                 lang="python"
@@ -76,9 +77,15 @@ jobs:
       - name: Run C Tests
         if: steps.detect.outputs.lang == 'c' && steps.detect.outputs.valid_code == 'true'
         run: |
-          echo "Compiling and running C tests..."
+          echo "Detected C solution. Compiling and running C tests..."
           gcc solutions/solution.c tests/test.c -o c_test
-          ./c_test
+          if [ $? -eq 0 ]; then
+            echo "Compilation successful, running tests..."
+            ./c_test
+          else
+            echo "Compilation failed!"
+            exit 1
+          fi
 
       - name: Run C++ Tests
         if: steps.detect.outputs.lang == 'cpp' && steps.detect.outputs.valid_code == 'true'
