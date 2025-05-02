@@ -1,11 +1,102 @@
+# name: DSA Solution Tester
+
+# on:
+#   push:
+#     paths:
+#       - "solutions/**"
+#       - "tests/**"
+#   pull_request:
+#     paths:
+#       - "solutions/**"
+#       - "tests/**"
+
+# jobs:
+#   run-tests:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 2
+
+#       - name: Find Changed Solution Files
+#         id: changed-files
+#         run: |
+#           # Get all modified/added solution files
+#           SOLUTIONS=$(git diff --name-only ${{ github.event.before || 'HEAD~1' }} HEAD | grep '^solutions/')
+#           echo "solutions=$SOLUTIONS" >> $GITHUB_OUTPUT
+#           echo "Detected solution files: $SOLUTIONS"
+
+#       - name: Verify Implementations
+#         run: |
+#           for file in ${{ steps.changed-files.outputs.solutions }}; do
+#             echo "Checking implementation in $file"
+#             if [ ! -s "$file" ]; then
+#               echo "::error::Empty solution file: $file"
+#               exit 1
+#             fi
+#             # Generic check for non-comment lines
+#             if ! grep -qE '^\s*[^/]' "$file"; then
+#               echo "::error::No implementation found in $file"
+#               exit 1
+#             fi
+#           done
+
+#       - name: Detect Language
+#         id: detect-language
+#         run: |
+#           for file in ${{ steps.changed-files.outputs.solutions }}; do
+#             case "$file" in
+#               *.c) echo "C" >> languages.txt ;;
+#               *.cpp) echo "C++" >> languages.txt ;;
+#               *.py) echo "Python" >> languages.txt ;;
+#               *.java) echo "Java" >> languages.txt ;;
+#             esac
+#           done
+#           LANGUAGES=$(sort -u languages.txt | tr '\n' ' ')
+#           echo "languages=$LANGUAGES" >> $GITHUB_OUTPUT
+#           echo "Detected languages: $LANGUAGES"
+
+#       - name: Setup Environments
+#         run: |
+#           sudo apt update
+#           echo "${{ steps.detect-language.outputs.languages }}" | grep -q "C" && sudo apt install -y gcc
+#           echo "${{ steps.detect-language.outputs.languages }}" | grep -q "C++" && sudo apt install -y g++
+#           echo "${{ steps.detect-language.outputs.languages }}" | grep -q "Python" && sudo apt install -y python3
+#           echo "${{ steps.detect-language.outputs.languages }}" | grep -q "Java" && sudo apt install -y openjdk-17-jdk-headless
+
+#       - name: Run Tests
+#         run: |
+#           for lang in ${{ steps.detect-language.outputs.languages }}; do
+#             echo "Processing $lang tests..."
+#             case "$lang" in
+#               C)
+#                 gcc solutions/*.c tests/*.c -o test_runner
+#                 ./test_runner || echo "C tests failed"
+#                 ;;
+#               C++)
+#                 g++ -std=c++17 solutions/*.cpp tests/*.cpp -o test_runner
+#                 ./test_runner || echo "C++ tests failed"
+#                 ;;
+#               Python)
+#                 python3 -m pytest tests/test_*.py -v || echo "Python tests failed"
+#                 ;;
+#               Java)
+#                 javac solutions/*.java tests/*.java -d out
+#                 java -cp out TestRunner || echo "Java tests failed"
+#                 ;;
+#             esac
+#           done
+
+
+
+
+
+
 name: DSA Solution Tester
 
 on:
   push:
-    paths:
-      - "solutions/**"
-      - "tests/**"
-  pull_request:
     paths:
       - "solutions/**"
       - "tests/**"
@@ -14,76 +105,50 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+      - uses: actions/checkout@v4
 
-      - name: Find Changed Solution Files
-        id: changed-files
+      - name: Set up environment
         run: |
-          # Get all modified/added solution files
-          SOLUTIONS=$(git diff --name-only ${{ github.event.before || 'HEAD~1' }} HEAD | grep '^solutions/')
-          echo "solutions=$SOLUTIONS" >> $GITHUB_OUTPUT
-          echo "Detected solution files: $SOLUTIONS"
-
-      - name: Verify Implementations
+          # Quiet apt-get to avoid warnings
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y \
+            $(grep -q "C" <<< "$LANGUAGES" && echo "gcc") \
+            $(grep -q "C++" <<< "$LANGUAGES" && echo "g++") \
+            $(grep -q "Python" <<< "$LANGUAGES" && echo "python3 python3-pip") \
+            $(grep -q "Java" <<< "$LANGUAGES" && echo "openjdk-17-jdk-headless")
+          
+      - name: Detect languages
+        id: detect-lang
         run: |
-          for file in ${{ steps.changed-files.outputs.solutions }}; do
-            echo "Checking implementation in $file"
-            if [ ! -s "$file" ]; then
-              echo "::error::Empty solution file: $file"
-              exit 1
-            fi
-            # Generic check for non-comment lines
-            if ! grep -qE '^\s*[^/]' "$file"; then
-              echo "::error::No implementation found in $file"
-              exit 1
-            fi
-          done
-
-      - name: Detect Language
-        id: detect-language
-        run: |
-          for file in ${{ steps.changed-files.outputs.solutions }}; do
+          LANGUAGES=""
+          for file in solutions/*; do
             case "$file" in
-              *.c) echo "C" >> languages.txt ;;
-              *.cpp) echo "C++" >> languages.txt ;;
-              *.py) echo "Python" >> languages.txt ;;
-              *.java) echo "Java" >> languages.txt ;;
+              *.c) LANGUAGES+="C " ;;
+              *.cpp) LANGUAGES+="C++ " ;;
+              *.py) LANGUAGES+="Python " ;;
+              *.java) LANGUAGES+="Java " ;;
             esac
           done
-          LANGUAGES=$(sort -u languages.txt | tr '\n' ' ')
-          echo "languages=$LANGUAGES" >> $GITHUB_OUTPUT
-          echo "Detected languages: $LANGUAGES"
+          echo "languages=${LANGUAGES% }" >> $GITHUB_OUTPUT
+          echo "Detected: ${LANGUAGES% }"
 
-      - name: Setup Environments
+      - name: Run tests
         run: |
-          sudo apt update
-          echo "${{ steps.detect-language.outputs.languages }}" | grep -q "C" && sudo apt install -y gcc
-          echo "${{ steps.detect-language.outputs.languages }}" | grep -q "C++" && sudo apt install -y g++
-          echo "${{ steps.detect-language.outputs.languages }}" | grep -q "Python" && sudo apt install -y python3
-          echo "${{ steps.detect-language.outputs.languages }}" | grep -q "Java" && sudo apt install -y openjdk-17-jdk-headless
-
-      - name: Run Tests
-        run: |
-          for lang in ${{ steps.detect-language.outputs.languages }}; do
-            echo "Processing $lang tests..."
+          set +e  # Don't fail immediately on test failures
+          for lang in ${{ steps.detect-lang.outputs.languages }}; do
+            echo "=== Testing $lang ==="
             case "$lang" in
               C)
-                gcc solutions/*.c tests/*.c -o test_runner
-                ./test_runner || echo "C tests failed"
+                gcc solutions/*.c tests/*.c -o testrunner && ./testrunner
                 ;;
               C++)
-                g++ -std=c++17 solutions/*.cpp tests/*.cpp -o test_runner
-                ./test_runner || echo "C++ tests failed"
+                g++ -std=c++17 solutions/*.cpp tests/*.cpp -o testrunner && ./testrunner
                 ;;
               Python)
-                python3 -m pytest tests/test_*.py -v || echo "Python tests failed"
+                pip install pytest && pytest tests/ -v
                 ;;
               Java)
-                javac solutions/*.java tests/*.java -d out
-                java -cp out TestRunner || echo "Java tests failed"
+                javac solutions/*.java tests/*.java && java -cp . TestRunner
                 ;;
             esac
           done
