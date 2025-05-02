@@ -119,6 +119,7 @@
 
 
 
+
 name: Multi-Language Solution Tester
 
 on:
@@ -133,10 +134,10 @@ jobs:
     name: Check Changed Files
     runs-on: ubuntu-latest
     outputs:
-      c_changed: ${{ steps.changed-files.outputs.c_changed }}
-      cpp_changed: ${{ steps.changed-files.outputs.cpp_changed }}
-      java_changed: ${{ steps.changed-files.outputs.java_changed }}
-      python_changed: ${{ steps.changed-files.outputs.python_changed }}
+      c_changed: ${{ steps.set-outputs.outputs.c_changed }}
+      cpp_changed: ${{ steps.set-outputs.outputs.cpp_changed }}
+      java_changed: ${{ steps.set-outputs.outputs.java_changed }}
+      python_changed: ${{ steps.set-outputs.outputs.python_changed }}
     steps:
       - uses: actions/checkout@v4
       - name: Check changed files
@@ -144,21 +145,25 @@ jobs:
         uses: tj-actions/changed-files@v45
         with:
           files: |
-            solutions/solution.c
-            tests/test.c
-            solutions/solution.cpp
-            tests/test.cpp
-            solutions/Solution.java
-            tests/Test.java
-            solutions/solution.py
-            tests/test.py
+            solutions/**/*.c
+            tests/**/*.c
+            solutions/**/*.cpp
+            tests/**/*.cpp
+            solutions/**/*.java
+            tests/**/*.java
+            solutions/**/*.py
+            tests/**/*.py
           json: true
-      - name: Set outputs for each language
+      - name: Debug changed files
         run: |
-          echo "c_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. == "solutions/solution.c" or . == "tests/test.c"; .)') " >> $GITHUB_OUTPUT
-          echo "cpp_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. == "solutions/solution.cpp" or . == "tests/test.cpp"; .)') " >> $GITHUB_OUTPUT
-          echo "java_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. == "solutions/Solution.java" or . == "tests/Test.java"; .)') " >> $GITHUB_OUTPUT
-          echo "python_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. == "solutions/solution.py" or . == "tests/test.py"; .)') " >> $GITHUB_OUTPUT
+          echo "Changed files: ${{ steps.changed-files.outputs.all_changed_files }}"
+      - name: Set outputs for each language
+        id: set-outputs
+        run: |
+          echo "c_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. | endswith(".c"); .)') " >> $GITHUB_OUTPUT
+          echo "cpp_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. | endswith(".cpp"); .)') " >> $GITHUB_OUTPUT
+          echo "java_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. | endswith(".java"); .)') " >> $GITHUB_OUTPUT
+          echo "python_changed=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -r 'any(. | endswith(".py"); .)') " >> $GITHUB_OUTPUT
 
   test-c:
     name: Run C Tests
