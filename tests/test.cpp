@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
-#include "solutions/solution.cpp"  // Include the solution file
+#include "../solutions/solution.cpp"  // Include the solution file
 
 // Create linked list from array
 ListNode* createList(const std::vector<int>& arr);
