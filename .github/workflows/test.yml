@@ -13,92 +13,170 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Install GCC (if not available)
+        with:
+          fetch-depth: 2  # To allow checking files changed in push events
+      
+      - name: Install GCC and development tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc
-
-      - name: Detect changed solution file and valid code
+          sudo apt-get install -y gcc g++ build-essential
+      
+      - name: Detect changed solution files
         id: detect
         run: |
-          set -e
-          changed_file=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^solutions/' || true)
-
-          echo "Changed file: $changed_file"
-
-          lang=""
-          valid_code=false
-
-          for file in $changed_file; do
-            echo "Processing file: $file"  # Debugging line
-            case "$file" in
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # For push events
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep '^solutions/' || true)
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            # For PR events
+            git fetch origin ${{ github.base_ref }} --depth=1
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep '^solutions/' || true)
+          else
+            # Fallback - check all solution files
+            CHANGED_FILES=$(find solutions -type f -name "solution.*" -o -name "Solution.java")
+          fi
+          
+          echo "Changed files: $CHANGED_FILES"
+          
+          # Default values
+          LANG=""
+          VALID_CODE=false
+          
+          # Check each changed file
+          for FILE in $CHANGED_FILES; do
+            echo "Processing file: $FILE"
+            
+            case "$FILE" in
               solutions/solution.py)
-                lang="python"
-                code=$(grep -vE '^\s*($|#)' $file | tr -d '[:space:]')
-                if [[ "$code" != "" && ! "$code" =~ ^(return.*|pass)$ ]]; then valid_code=true; fi
+                LANG="python"
+                # Check if file contains actual code (not just comments or returns)
+                CODE=$(grep -vE '^\s*($|#)' $FILE | tr -d '[:space:]')
+                if [[ -n "$CODE" && ! "$CODE" =~ ^(return.*|pass)$ ]]; then 
+                  VALID_CODE=true
+                fi
                 ;;
               solutions/solution.c)
-                lang="c"
-                code=$(grep -vE '^\s*($|//|/\*|\*)' $file | tr -d '[:space:]')
-                if [[ "$code" != "" && ! "$code" =~ ^(return[0-9a-zA-Z_]*;?)$ ]]; then valid_code=true; fi
+                LANG="c"
+                # Check if file contains actual code (not just comments or returns)
+                CODE=$(grep -vE '^\s*($|//|/\*|\*)' $FILE | tr -d '[:space:]')
+                if [[ -n "$CODE" && ! "$CODE" =~ ^(return[0-9a-zA-Z_]*;?)$ ]]; then 
+                  VALID_CODE=true
+                fi
                 ;;
               solutions/solution.cpp)
-                lang="cpp"
-                code=$(grep -vE '^\s*($|//|/\*|\*)' $file | tr -d '[:space:]')
-                if [[ "$code" != "" && ! "$code" =~ ^(return[0-9a-zA-Z_]*;?)$ ]]; then valid_code=true; fi
+                LANG="cpp"
+                # Check if file contains actual code (not just comments or returns)
+                CODE=$(grep -vE '^\s*($|//|/\*|\*)' $FILE | tr -d '[:space:]')
+                if [[ -n "$CODE" && ! "$CODE" =~ ^(return[0-9a-zA-Z_]*;?)$ ]]; then 
+                  VALID_CODE=true
+                fi
                 ;;
               solutions/Solution.java)
-                lang="java"
-                code=$(grep -vE '^\s*($|//|/\*|\*|\*)' $file | tr -d '[:space:]')
-                if [[ "$code" != "" && ! "$code" =~ ^(return.*;?)$ ]]; then valid_code=true; fi
+                LANG="java"
+                # Check if file contains actual code (not just comments or returns)
+                CODE=$(grep -vE '^\s*($|//|/\*|\*/)' $FILE | tr -d '[:space:]')
+                if [[ -n "$CODE" && ! "$CODE" =~ ^(return.*;?)$ ]]; then 
+                  VALID_CODE=true
+                fi
                 ;;
             esac
           done
-
-          echo "lang=$lang" >> $GITHUB_OUTPUT
-          echo "valid_code=$valid_code" >> $GITHUB_OUTPUT
-
+          
+          echo "Language detected: $LANG"
+          echo "Valid code: $VALID_CODE"
+          
+          echo "lang=$LANG" >> $GITHUB_OUTPUT
+          echo "valid_code=$VALID_CODE" >> $GITHUB_OUTPUT
+      
+      - name: Debug Information
+        run: |
+          echo "Language detected: ${{ steps.detect.outputs.lang }}"
+          echo "Valid code: ${{ steps.detect.outputs.valid_code }}"
+          ls -la solutions/
+          ls -la tests/
+          
+          if [ "${{ steps.detect.outputs.lang }}" == "c" ]; then
+            echo "C file content:"
+            cat solutions/solution.c
+            echo "C test content:"
+            cat tests/test.c
+          fi
+      
       - name: Setup Python
         if: steps.detect.outputs.lang == 'python' && steps.detect.outputs.valid_code == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-
+      
       - name: Run Python Tests
         if: steps.detect.outputs.lang == 'python' && steps.detect.outputs.valid_code == 'true'
         run: |
           python3 -m unittest discover -s tests -p 'test_*.py'
-
+      
       - name: Run C Tests
         if: steps.detect.outputs.lang == 'c' && steps.detect.outputs.valid_code == 'true'
         run: |
           echo "Detected C solution. Compiling and running C tests..."
-          gcc solutions/solution.c tests/test.c -o c_test
+          
+          # Display compiler version
+          gcc --version
+          
+          # Check if test.c includes solution.c directly
+          if grep -q '#include "solution.c"' tests/test.c; then
+            echo "Test directly includes solution.c - Compiling only test.c..."
+            # Compile only test.c (which already includes solution.c)
+            gcc -Wall -Wextra -I./solutions -I./tests tests/test.c -o c_test
+          else
+            echo "Compiling both solution.c and test.c..."
+            # Compile both files
+            gcc -Wall -Wextra -I./solutions -I./tests solutions/solution.c tests/test.c -o c_test
+          fi
+          
+          # Check compilation result
           if [ $? -eq 0 ]; then
             echo "Compilation successful. Running the tests..."
-            ./c_test || echo "Test execution failed!"  # Added error handling
+            ./c_test
+            TEST_RESULT=$?
+            if [ $TEST_RESULT -ne 0 ]; then
+              echo "Test execution failed with exit code $TEST_RESULT"
+              exit $TEST_RESULT
+            fi
           else
             echo "Compilation failed!"
             exit 1
           fi
-
+      
       - name: Run C++ Tests
         if: steps.detect.outputs.lang == 'cpp' && steps.detect.outputs.valid_code == 'true'
         run: |
-          g++ solutions/solution.cpp tests/test.cpp -o cpp_test && ./cpp_test
-
+          echo "Detected C++ solution. Compiling and running C++ tests..."
+          g++ -Wall -Wextra -I./solutions -I./tests solutions/solution.cpp tests/test.cpp -o cpp_test
+          
+          # Check compilation result
+          if [ $? -eq 0 ]; then
+            echo "Compilation successful. Running the tests..."
+            ./cpp_test
+            TEST_RESULT=$?
+            if [ $TEST_RESULT -ne 0 ]; then
+              echo "Test execution failed with exit code $TEST_RESULT"
+              exit $TEST_RESULT
+            fi
+          else
+            echo "Compilation failed!"
+            exit 1
+          fi
+      
       - name: Setup Java
         if: steps.detect.outputs.lang == 'java' && steps.detect.outputs.valid_code == 'true'
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
-
+      
       - name: Run Java Tests
         if: steps.detect.outputs.lang == 'java' && steps.detect.outputs.valid_code == 'true'
         run: |
