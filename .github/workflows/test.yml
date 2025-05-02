@@ -107,18 +107,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install gcc
         run: sudo apt-get update && sudo apt-get install -y gcc
 
       - name: Compile and run tests
         run: |
           cd "$GITHUB_WORKSPACE"
-          echo "=== Compiling C Tests ==="
-          
-          # Compile test runner (solution as library)
-          gcc -c solutions/solution.c -o solution.o
-          gcc -c tests/test.c -o test.o
-          gcc solution.o test.o -o testrunner
-          
-          echo "=== Running C Tests ==="
+          # Compile as single translation unit
+          gcc tests/test.c -o testrunner
           ./testrunner
