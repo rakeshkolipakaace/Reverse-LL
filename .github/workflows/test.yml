@@ -121,7 +121,6 @@
 
 
 
-
 name: Multi-Language Solution Tester
 
 on:
@@ -136,8 +135,9 @@ jobs:
     name: Run C Tests
     runs-on: ubuntu-latest
     if: |
-      contains(join(github.event.head_commit.modified, ','), 'solution.c') ||
-      contains(join(github.event.head_commit.modified, ','), 'test.c')
+      contains(github.event.head_commit.message, 'solution.c') ||
+      contains(github.event.head_commit.message, 'test.c') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Install gcc
@@ -151,8 +151,9 @@ jobs:
     name: Run C++ Tests
     runs-on: ubuntu-latest
     if: |
-      contains(join(github.event.head_commit.modified, ','), 'solution.cpp') ||
-      contains(join(github.event.head_commit.modified, ','), 'test.cpp')
+      contains(github.event.head_commit.message, 'solution.cpp') ||
+      contains(github.event.head_commit.message, 'test.cpp') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Install g++
@@ -166,8 +167,9 @@ jobs:
     name: Run Java Tests
     runs-on: ubuntu-latest
     if: |
-      contains(join(github.event.head_commit.modified, ','), 'Solution.java') ||
-      contains(join(github.event.head_commit.modified, ','), 'Test.java')
+      contains(github.event.head_commit.message, 'Solution.java') ||
+      contains(github.event.head_commit.message, 'Test.java') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Compile and run Java tests
@@ -179,8 +181,9 @@ jobs:
     name: Run Python Tests
     runs-on: ubuntu-latest
     if: |
-      contains(join(github.event.head_commit.modified, ','), 'solution.py') ||
-      contains(join(github.event.head_commit.modified, ','), 'test.py')
+      contains(github.event.head_commit.message, 'solution.py') ||
+      contains(github.event.head_commit.message, 'test.py') ||
+      always()
     steps:
       - uses: actions/checkout@v4
       - name: Run Python tests
