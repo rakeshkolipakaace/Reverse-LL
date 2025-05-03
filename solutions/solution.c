@@ -10,6 +10,6 @@ struct ListNode {
 
 // Function to reverse a singly linked list........................
 struct ListNode* reverseList(struct ListNode* head) {
-    return NULL;
+    
    // write your code here 
 }
