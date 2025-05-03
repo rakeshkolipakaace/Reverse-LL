@@ -127,15 +127,14 @@ public class Test {
             ListNode expectedHead = createList(expected);
             ListNode result = solution.reverseList(head);
             
-            // Check if result is null
+            // Check if the result is null, stop running if so
             if (result == null) {
                 System.out.println(testName + ": ❌ FAILED (Result is null)");
-                return;  // Stop further execution of this test
+                return; // Stop further execution for this test case
             }
-            
+
             boolean passed = listsEqual(expectedHead, result);
             System.out.println(testName + ": " + (passed ? "✅ PASSED" : "❌ FAILED"));
-            
             if (!passed) {
                 System.out.print("Expected: ");
                 printList(expectedHead);
