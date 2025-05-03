@@ -10,6 +10,7 @@ public:
 class Solution {
 public:
     ListNode* reverseList(ListNode* head) {
+        return NULL;
 
        // Write your code here
     }
