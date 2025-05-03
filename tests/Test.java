@@ -78,7 +78,6 @@
 
 
 
-
 package tests;
 
 import solutions.Solution;
@@ -125,8 +124,15 @@ public class Test {
             ListNode expectedHead = createList(expected);
             ListNode result = solution.reverseList(head);
 
+            // Handle case where both are null (empty list)
+            if (expectedHead == null && result == null) {
+                System.out.println(testName + ": ✅ PASSED");
+                return true;
+            }
+
+            // If result is null but expected is not
             if (result == null) {
-                System.out.println(testName + ": ❌ FAILED (Result is null)");
+                System.out.println(testName + ": ❌ FAILED (Result is null, expected non-null)");
                 return false;
             }
 
@@ -149,7 +155,7 @@ public class Test {
             allPassed &= runTest("Test 1", new int[]{1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1});
             allPassed &= runTest("Test 2", new int[]{1, 2}, new int[]{2, 1});
             allPassed &= runTest("Test 3", new int[]{1}, new int[]{1});
-            allPassed &= runTest("Test 4", new int[]{}, new int[]{});
+            allPassed &= runTest("Test 4", new int[]{}, new int[]{}); // fixed case
             allPassed &= runTest("Test 5", new int[]{-1, -2, -3, -4}, new int[]{-4, -3, -2, -1});
             allPassed &= runTest("Test 6", new int[]{1, -2, 3, -4, 5}, new int[]{5, -4, 3, -2, 1});
             allPassed &= runTest("Test 7", new int[]{-105, 0, 105}, new int[]{105, 0, -105});
