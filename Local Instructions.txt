@@ -1,5 +1,6 @@
-cpp local compile 
+Automation of git commit and push
 
+CPP (C++) 
 
 git add solutions/solution.cpp tests/test.cpp
 git commit -m "Cpp: Add test cases1.2"
@@ -7,14 +8,14 @@ git push
 
 
 
-Python 
+PYTHON
 
  git add solutions/solution.py tests/test.py
  git commit -m "py: Add test cases12111"
  git push
 
 
-c 
+C
 
 
 git add solutions/solution.c tests/test.c
@@ -30,6 +31,41 @@ git commit -m "java: Add test cases"
 git push
  
 
+
+Local run commands
+
+go inside the tests folder and run the command for C and C++
+
+
+CPP (C++)
+
+cd ..\tests
+g++ test.cpp -o test
+.\test
+
+
+
+C 
+
+cd ..          
+cd tests       
+
+gcc test.c -o test
+.\test
+
+
+
+PYTHON
+
+for python run the commad from the root directory dont run on the tests folder
+
+python tests/test.py
+
+
+
+JAVA 
+
+for click run button  in vs code 
 
 
 
