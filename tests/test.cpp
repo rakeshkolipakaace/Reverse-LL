@@ -80,17 +80,18 @@ int main() {
     // runTest({10, 9, 8, 7, 6}, {6, 7, 8, 9, 10}, "Decreasing order");
     // runTest({-5000}, {-5000}, "Single large negative value");
 
-    runTest({5, 10}, "Two nodes");
-runTest({1, 2, 3, 4, 5}, "Multiple nodes");
-runTest({-1, -2, -3}, "Negative values");
-runTest({0, -10, 20, -30, 40}, "Mixed values");
-runTest({5000, 10000, 15000, 20000}, "Large positive values");
-runTest({10, 9, 8, 7, 6}, "Decreasing order");
-runTest({-5000}, "Single large negative value");
-runTest({1, 1, 1, 1}, "All same values");
-runTest({INT_MAX, INT_MIN, 0}, "Edge int values");
-runTest({1, 2, 3, 2, 1}, "Palindrome sequence");
-runTest({1, 3, 5, 7, 9, 11, 13, 15, 17, 19}, "Odd numbers up to 19");
+    runTest({5, 10}, {10, 5}, "Two nodes");
+    runTest({1, 2, 3, 4, 5}, {5, 4, 3, 2, 1}, "Multiple nodes");
+    runTest({-1, -2, -3}, {-3, -2, -1}, "Negative values");
+    runTest({0, -10, 20, -30, 40}, {40, -30, 20, -10, 0}, "Mixed values");
+    runTest({5000, 10000, 15000, 20000}, {20000, 15000, 10000, 5000}, "Large positive values");
+    runTest({10, 9, 8, 7, 6}, {6, 7, 8, 9, 10}, "Decreasing order");
+    runTest({-5000}, {-5000}, "Single large negative value");
+    runTest({1, 1, 1, 1}, {1, 1, 1, 1}, "All same values");
+    runTest({INT_MAX, INT_MIN, 0}, {0, INT_MIN, INT_MAX}, "Edge int values");
+    runTest({1, 2, 3, 2, 1}, {1, 2, 3, 2, 1}, "Palindrome sequence");
+    runTest({1, 3, 5, 7, 9, 11, 13, 15, 17, 19}, {19, 17, 15, 13, 11, 9, 7, 5, 3, 1}, "Odd numbers up to 19");
+    
 
 
     // Test case with large list (1 to 1000)
