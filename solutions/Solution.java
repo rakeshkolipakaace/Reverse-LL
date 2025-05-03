@@ -20,15 +20,8 @@ public class Solution {
 
     // Function to reverse the linked list
     public ListNode reverseList(ListNode head) {
-        ListNode newHead = null;
-        while (head != null) {
-            ListNode next = head.next;
-            head.next = newHead;
-            newHead = head;
-            head = next;
-        }
-        return newHead;
+        return null;
 
-       // write your code here.......
+       // write your code here.....
     }
 }
