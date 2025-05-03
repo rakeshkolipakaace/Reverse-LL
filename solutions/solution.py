@@ -9,5 +9,6 @@ class Solution(object):
         :type head: Optional[ListNode]
         :rtype: Optional[ListNode]
         """
+        return None
     
     # write your code here ...
