@@ -79,12 +79,10 @@
 
 
 
-
-
 package tests;
 
 import solutions.Solution;
-import solutions.Solution.ListNode;  // Correct import for ListNode
+import solutions.Solution.ListNode;
 
 public class Test {
     static class ReverseListTest {
@@ -122,15 +120,14 @@ public class Test {
         }
 
         // Method to run individual tests
-        private void runTest(String testName, int[] nums, int[] expected) {
+        private boolean runTest(String testName, int[] nums, int[] expected) {
             ListNode head = createList(nums);
             ListNode expectedHead = createList(expected);
             ListNode result = solution.reverseList(head);
-            
-            // Check if the result is null, stop running if so
+
             if (result == null) {
                 System.out.println(testName + ": ❌ FAILED (Result is null)");
-                return; // Stop further execution for this test case
+                return false;
             }
 
             boolean passed = listsEqual(expectedHead, result);
@@ -141,26 +138,34 @@ public class Test {
                 System.out.print("Got: ");
                 printList(result);
             }
+            return passed;
         }
 
-        // Method to run all tests
-        public void runAllTests() {
+        // Method to run all tests and return whether all passed
+        public boolean runAllTests() {
             System.out.println("Test started...");
-            runTest("Test 1", new int[]{1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1});
-            runTest("Test 2", new int[]{1, 2}, new int[]{2, 1});
-            runTest("Test 3", new int[]{1}, new int[]{1});
-            runTest("Test 4", new int[]{}, new int[]{});
-            runTest("Test 5", new int[]{-1, -2, -3, -4}, new int[]{-4, -3, -2, -1});
-            runTest("Test 6", new int[]{1, -2, 3, -4, 5}, new int[]{5, -4, 3, -2, 1});
-            runTest("Test 7", new int[]{-105, 0, 105}, new int[]{105, 0, -105});
-            runTest("Test 8", new int[]{0, 0, 0, 0}, new int[]{0, 0, 0, 0});
-            runTest("Test 9", new int[]{0, 1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1, 0});
-            runTest("Test 10", new int[]{-1, 0, 1}, new int[]{1, 0, -1});
+            boolean allPassed = true;
+
+            allPassed &= runTest("Test 1", new int[]{1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1});
+            allPassed &= runTest("Test 2", new int[]{1, 2}, new int[]{2, 1});
+            allPassed &= runTest("Test 3", new int[]{1}, new int[]{1});
+            allPassed &= runTest("Test 4", new int[]{}, new int[]{});
+            allPassed &= runTest("Test 5", new int[]{-1, -2, -3, -4}, new int[]{-4, -3, -2, -1});
+            allPassed &= runTest("Test 6", new int[]{1, -2, 3, -4, 5}, new int[]{5, -4, 3, -2, 1});
+            allPassed &= runTest("Test 7", new int[]{-105, 0, 105}, new int[]{105, 0, -105});
+            allPassed &= runTest("Test 8", new int[]{0, 0, 0, 0}, new int[]{0, 0, 0, 0});
+            allPassed &= runTest("Test 9", new int[]{0, 1, 2, 3, 4, 5}, new int[]{5, 4, 3, 2, 1, 0});
+            allPassed &= runTest("Test 10", new int[]{-1, 0, 1}, new int[]{1, 0, -1});
+
+            return allPassed;
         }
     }
 
     public static void main(String[] args) {
         ReverseListTest tester = new ReverseListTest();
-        tester.runAllTests();
+        boolean passed = tester.runAllTests();
+        if (!passed) {
+            System.exit(1);  // Fail the GitHub Action job
+        }
     }
 }
