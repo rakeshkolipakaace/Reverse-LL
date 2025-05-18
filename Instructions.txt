@@ -3,7 +3,7 @@ Automation of git commit and push
 CPP (C++) 
 
 git add solutions/solution.cpp tests/test.cpp
-git commit -m "Cpp: Add test cases1.2"
+git commit -m "Cpp Solution"
 git push
 
 
@@ -11,7 +11,7 @@ git push
 PYTHON
 
  git add solutions/solution.py tests/test.py
- git commit -m "py: Add test cases12111"
+ git commit -m "py Solution"
  git push
 
 
@@ -19,7 +19,7 @@ C
 
 
 git add solutions/solution.c tests/test.c
-git commit -m "C: Add test cases3.12"
+git commit -m "C Solution"
 git push
  
 
@@ -27,7 +27,7 @@ git push
 JAVA 
 
 git add solutions/Solution.java tests/Test.java
-git commit -m "java: Add test cases"
+git commit -m "java Solution"
 git push
 
 
